@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ViewState } from '../../types';
 
 interface LoginViewProps {
@@ -5,6 +6,70 @@ interface LoginViewProps {
 }
 
 export function LoginView({ onLogin }: LoginViewProps) {
+  // 1. STATE: We need React to "remember" what the user types.
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // 2. TOGGLE STATE: Are we showing the "Login" form or the "Create Account" form?
+  const [isRegistering, setIsRegistering] = useState(false);
+  
+  // 3. ERROR STATE: If the server says "Invalid Password", we store that here to show the user.
+  const [error, setError] = useState('');
+
+  /**
+   * This function runs when the user clicks the "Enter Planner" / "Register" button.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
+    // e.preventDefault() stops the page from automatically refreshing when you submit a form.
+    e.preventDefault();
+    
+    // Clear any previous errors
+    setError('');
+
+    // Decide which URL to talk to based on if we are logging in or registering
+    const endpoint = isRegistering ? '/api/users/register' : '/api/users/login';
+
+    try {
+      // 4. FETCH: This is how React talks to your Express backend!
+      const response = await fetch(endpoint, {
+        method: 'POST', // We are sending data
+        headers: { 'Content-Type': 'application/json' }, // Telling the server to expect JSON
+        body: JSON.stringify({ email, password }), // Converting our email/password state into a text string
+      });
+
+      // The server replies. We convert the reply back into an object we can read.
+      const data = await response.json();
+
+      // If the response is not "OK" (like a 400 Bad Request)
+      if (!response.ok) {
+        // Set our error state so the red box shows up on screen
+        setError(data.error || 'Something went wrong');
+        return;
+      }
+
+      // If we are just registering, the account is created but we aren't logged in yet.
+      // Let's automatically switch them over to the Login view so they can type their new password.
+      if (isRegistering) {
+        setIsRegistering(false);
+        setError('Account created! Please log in.'); // Actually a success message in this case
+        return;
+      }
+
+      // If we are Logging in, the server sent us a 'token' (The digital ID card)
+      if (data.token) {
+        // localStorage is your browser's built-in memory vault. 
+        // We save the token here so if the user refreshes the page, they don't get logged out!
+        localStorage.setItem('token', data.token);
+        
+        // Trigger the function passed from App.tsx to switch to the Dashboard
+        onLogin();
+      }
+
+    } catch (err) {
+      setError('Failed to connect to the server.');
+    }
+  };
+
   return (
     <section className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 animate-in fade-in duration-300">
       <div className="w-full max-w-5xl">
@@ -67,65 +132,105 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
           {/* Right Login Card */}
           <div className="lg:col-span-6 bg-white p-7 rounded-xl neo-box space-y-6">
+            {/* Toggle Between Login and Register */}
             <div className="grid grid-cols-2 border-2 border-black rounded-lg overflow-hidden shadow-[2px_2px_0px_#000] font-bold text-xs font-display">
-              <button className="py-2 bg-yellow-300 border-r-2 border-black text-center">LOG IN</button>
-              <button className="py-2 bg-[#f6f3f2] hover:bg-white text-slate-600 text-center">CREATE ACCOUNT</button>
+              <button 
+                onClick={() => { setIsRegistering(false); setError(''); }}
+                className={`py-2 text-center transition-colors ${!isRegistering ? 'bg-yellow-300 border-r-2 border-black' : 'bg-[#f6f3f2] hover:bg-white text-slate-600'}`}
+              >
+                LOG IN
+              </button>
+              <button 
+                onClick={() => { setIsRegistering(true); setError(''); }}
+                className={`py-2 text-center transition-colors ${isRegistering ? 'bg-yellow-300 border-l-2 border-black' : 'bg-[#f6f3f2] hover:bg-white text-slate-600'}`}
+              >
+                CREATE ACCOUNT
+              </button>
             </div>
             
             <div>
               <h3 className="text-xl font-display font-black flex items-center gap-1.5">
-                <span>✨</span> Welcome back, Scholar-Athlete
+                <span>✨</span> {isRegistering ? 'Join AcroPulse' : 'Welcome back, Scholar-Athlete'}
               </h3>
               <p className="text-xs text-slate-600 mt-1 font-medium">
-                Synchronize your syllabus and training intervals for the upcoming week.
+                {isRegistering 
+                  ? 'Create an account to synchronize your syllabus and training.' 
+                  : 'Synchronize your syllabus and training intervals for the upcoming week.'}
               </p>
             </div>
 
-            <button 
-              onClick={onLogin}
-              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border-2 border-black rounded-lg neo-box-sm neo-btn flex items-center justify-center gap-3 font-bold text-xs font-display"
-            >
-              {/* Google Icon SVG (simplified for brevity, use full SVG from original if needed) */}
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path>
-              </svg>
-              <span>Continue with Google</span>
-            </button>
+            {/* Error Message Display */}
+            {error && (
+              <div className={`p-3 border-2 border-black rounded-lg text-xs font-bold font-display shadow-[2px_2px_0px_#000] ${error.includes('Account created') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {error}
+              </div>
+            )}
 
-            <div className="relative flex items-center justify-center font-display">
-              <div className="border-t-2 border-black w-full"></div>
-              <span className="bg-white px-3 text-[10px] font-black uppercase tracking-wider text-slate-500 absolute">or continue with email</span>
-            </div>
+            {!isRegistering && (
+              <>
+                <button 
+                  type="button"
+                  className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border-2 border-black rounded-lg neo-box-sm neo-btn flex items-center justify-center gap-3 font-bold text-xs font-display opacity-50 cursor-not-allowed"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path>
+                  </svg>
+                  <span>Continue with Google (Coming Soon)</span>
+                </button>
 
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onLogin(); }}>
+                <div className="relative flex items-center justify-center font-display">
+                  <div className="border-t-2 border-black w-full"></div>
+                  <span className="bg-white px-3 text-[10px] font-black uppercase tracking-wider text-slate-500 absolute">or continue with email</span>
+                </div>
+              </>
+            )}
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-[11px] font-display font-black uppercase tracking-wider text-slate-700 mb-1">University or Personal Email</label>
                 <div className="relative">
-                  <input className="w-full text-xs font-semibold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none focus:border-[#8b5cf6]" type="email" defaultValue="rosa.athlete@stanford.edu" />
+                  <input 
+                    className="w-full text-xs font-semibold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none focus:border-[#8b5cf6]" 
+                    type="email" 
+                    placeholder="rosa.athlete@stanford.edu"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1 font-display">
                   <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">Secret Password</label>
-                  <a className="text-[11px] font-bold text-[#8b5cf6] hover:underline" href="#">Forgot password?</a>
+                  {!isRegistering && <a className="text-[11px] font-bold text-[#8b5cf6] hover:underline" href="#">Forgot password?</a>}
                 </div>
                 <div className="relative">
-                  <input className="w-full text-xs font-semibold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none focus:border-[#8b5cf6]" type="password" defaultValue="••••••••••••" />
+                  <input 
+                    className="w-full text-xs font-semibold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none focus:border-[#8b5cf6]" 
+                    type="password" 
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs font-bold font-display">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input defaultChecked className="w-4 h-4 border-2 border-black rounded accent-[#8b5cf6]" type="checkbox" />
-                  <span>Remember me for 30 days</span>
-                </label>
-              </div>
+              {!isRegistering && (
+                <div className="flex items-center justify-between text-xs font-bold font-display">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input defaultChecked className="w-4 h-4 border-2 border-black rounded accent-[#8b5cf6]" type="checkbox" />
+                    <span>Remember me for 30 days</span>
+                  </label>
+                </div>
+              )}
 
               <button type="submit" className="w-full py-3 px-4 bg-[#8b5cf6] text-white font-display font-black text-sm border-2 border-black rounded-lg shadow-[4px_4px_0px_#000] neo-btn flex items-center justify-center gap-2">
-                <span>Enter Planner</span>
+                <span>{isRegistering ? 'Create Account' : 'Enter Planner'}</span>
                 <span className="text-base font-bold">→</span>
               </button>
             </form>

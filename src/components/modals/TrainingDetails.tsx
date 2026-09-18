@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Task } from '../../types';
 
 interface TrainingDetailsProps {
@@ -13,6 +14,17 @@ export function TrainingDetails({ task, onClose, onEdit, onFinish }: TrainingDet
     { name: '1. Explosive Pull-ups', desc: 'Load: Bodyweight + 15 kg', stats: '4 × 8', tag: 'RPE 8.5', tagColor: 'bg-emerald-100' },
     { name: '2. Box Jumps (Plyometric)', desc: 'Load: 30" Box • Rapid Ground Contact', stats: '5 × 6', tag: 'Fast Twitch', tagColor: 'bg-pink-100' }
   ];
+
+  // State to track which exercises are completed
+  const [completedExercises, setCompletedExercises] = useState<number[]>([]);
+
+  const toggleExercise = (index: number) => {
+    if (completedExercises.includes(index)) {
+      setCompletedExercises(completedExercises.filter(i => i !== index));
+    } else {
+      setCompletedExercises([...completedExercises, index]);
+    }
+  };
 
   return (
     <div className="p-6 space-y-5 font-display">
@@ -33,18 +45,33 @@ export function TrainingDetails({ task, onClose, onEdit, onFinish }: TrainingDet
           <span className="text-[10px] text-slate-500 font-bold">SETS × REPS</span>
         </div>
         
-        {defaultExercises.map((ex, i) => (
-          <div key={i} className="p-3 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm flex items-center justify-between">
-            <div>
-              <h5 className="text-xs font-black">{ex.name}</h5>
-              <p className="text-[10px] text-slate-600 font-medium font-sans">{ex.desc}</p>
+        {defaultExercises.map((ex, i) => {
+          const isCompleted = completedExercises.includes(i);
+          return (
+            <div 
+              key={i} 
+              className={`p-3 border-2 border-black rounded-lg neo-box-sm flex items-center gap-3 transition-colors cursor-pointer ${isCompleted ? 'bg-slate-100 opacity-60' : 'bg-[#fcf9f8]'}`}
+              onClick={() => toggleExercise(i)}
+            >
+              <div className="flex-shrink-0">
+                <input 
+                  type="checkbox" 
+                  checked={isCompleted} 
+                  readOnly
+                  className="w-4 h-4 border-2 border-black rounded accent-black" 
+                />
+              </div>
+              <div className="flex-1">
+                <h5 className={`text-xs font-black transition-all ${isCompleted ? 'line-through text-slate-500' : ''}`}>{ex.name}</h5>
+                <p className="text-[10px] text-slate-600 font-medium font-sans">{ex.desc}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="px-2 py-1 bg-white border-2 border-black rounded font-black text-xs shadow-[1px_1px_0px_#000]">{ex.stats}</span>
+                <span className={`px-1.5 py-0.5 ${ex.tagColor} border border-black rounded text-[10px] font-bold`}>{ex.tag}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="px-2 py-1 bg-white border-2 border-black rounded font-black text-xs shadow-[1px_1px_0px_#000]">{ex.stats}</span>
-              <span className={`px-1.5 py-0.5 ${ex.tagColor} border border-black rounded text-[10px] font-bold`}>{ex.tag}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       <div className="p-3 bg-yellow-50 border-2 border-black rounded-lg neo-box-sm space-y-1">

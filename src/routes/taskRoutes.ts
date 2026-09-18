@@ -1,55 +1,58 @@
-import express from 'express';
+import express, { Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { Task } from '../db/models/Task.js';
 import { initialTasks } from '../data.js';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
-// express.Router() creates a mini-application just for handling these specific URLs.
 export const router = express.Router();
-
-// We keep our fallback data here just in case you haven't connected MongoDB yet.
 let fallbackTasks = [...initialTasks];
+
+// --- SECURITY GUARD ---
+// By putting requireAuth here, we force EVERY route in this file to pass the security check first.
+router.use(requireAuth);
 
 /**
  * GET /api/tasks
- * 'req' (Request): Contains data sent FROM the frontend (like headers or URL parameters).
- * 'res' (Response): The tool we use to send data BACK to the frontend.
  */
-router.get('/', async (req, res) => {
-  // Check if MongoDB is connected (1 means connected)
+router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (mongoose.connection.readyState === 1) {
     try {
-      // Find all tasks in the database
-      const tasks = await Task.find();
-      // Send them back as JSON
+      // SECURITY UPGRADE: Only find tasks that belong to the logged-in user!
+      const tasks = await Task.find({ userId: req.userId });
       res.json(tasks.map(t => ({ ...t.toObject(), id: t._id.toString() })));
     } catch (e) {
-      // If something goes wrong, send a 500 (Internal Server Error) status
-      res.status(500).json({ error: 'Database error' });
+      next(e);
     }
   } else {
-    // Fallback if no database is connected
     res.json(fallbackTasks);
   }
 });
 
 /**
  * POST /api/tasks
- * Used to create a new task.
  */
-router.post('/', async (req, res) => {
+router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (mongoose.connection.readyState === 1) {
     try {
-      // req.body contains the form data sent from React
-      const newTask = new Task(req.body);
-      // .save() physically writes it to the MongoDB database
+      // BAD REQUEST VALIDATION
+      if (!req.body.title || !req.body.category || !req.body.day) {
+        res.status(400);
+        return next(new Error('Title, category, and day are required'));
+      }
+
+      // SECURITY UPGRADE: Attach the logged-in user's ID to the new task before saving it.
+      const taskData = {
+        ...req.body,
+        userId: req.userId 
+      };
+      const newTask = new Task(taskData);
       await newTask.save();
-      // Send the newly saved task back to React so it can update the UI
+      
       res.json({ ...newTask.toObject(), id: newTask._id.toString() });
     } catch (e) {
-      res.status(500).json({ error: 'Database error' });
+      next(e);
     }
   } else {
-    // Fallback logic
     const newTask = { ...req.body, id: `task-${Date.now()}` };
     fallbackTasks.push(newTask);
     res.json(newTask);
@@ -58,19 +61,23 @@ router.post('/', async (req, res) => {
 
 /**
  * DELETE /api/tasks/:id
- * The ':id' is a dynamic URL parameter (e.g. /api/tasks/12345)
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (mongoose.connection.readyState === 1) {
     try {
-      // Extract the ID from the URL using req.params
-      await Task.findByIdAndDelete(req.params.id);
+      // SECURITY UPGRADE: Only allow deleting if the task belongs to the user!
+      const task = await Task.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+      
+      if (!task) {
+        res.status(404);
+        return next(new Error('Task not found or unauthorized'));
+      }
+      
       res.json({ success: true });
     } catch (e) {
-      res.status(500).json({ error: 'Database error' });
+      next(e);
     }
   } else {
-    // Fallback logic
     fallbackTasks = fallbackTasks.filter(t => t.id !== req.params.id);
     res.json({ success: true });
   }

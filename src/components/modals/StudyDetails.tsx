@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Task } from '../../types';
 
 interface StudyDetailsProps {
@@ -10,10 +11,21 @@ interface StudyDetailsProps {
 export function StudyDetails({ task, onClose, onEdit, onFinish }: StudyDetailsProps) {
   // Use mock details if actual details don't exist yet on the task object
   const defaultGoals = [
-    { text: 'Chapter 19 practice problems (1-18)', checked: true, tag: 'Required', tagColor: 'bg-white' },
-    { text: 'Review reaction mechanisms flashcards', checked: false, tag: 'Recall', tagColor: 'bg-yellow-100' },
-    { text: 'Pre-lab quiz preparation on Gradescope', checked: false, tag: 'Due 23:59', tagColor: 'bg-purple-100' },
+    { text: 'Chapter 19 practice problems (1-18)', tag: 'Required', tagColor: 'bg-white' },
+    { text: 'Review reaction mechanisms flashcards', tag: 'Recall', tagColor: 'bg-yellow-100' },
+    { text: 'Pre-lab quiz preparation on Gradescope', tag: 'Due 23:59', tagColor: 'bg-purple-100' },
   ];
+
+  // State to track which study goals are completed
+  const [completedGoals, setCompletedGoals] = useState<number[]>([0]); // First one checked by default for demo
+
+  const toggleGoal = (index: number) => {
+    if (completedGoals.includes(index)) {
+      setCompletedGoals(completedGoals.filter(i => i !== index));
+    } else {
+      setCompletedGoals([...completedGoals, index]);
+    }
+  };
 
   return (
     <div className="p-6 space-y-5 font-display">
@@ -37,23 +49,30 @@ export function StudyDetails({ task, onClose, onEdit, onFinish }: StudyDetailsPr
           <span className="text-[10px] text-slate-500 font-bold">TAP TO COMPLETE</span>
         </div>
         <div className="space-y-2">
-          {defaultGoals.map((goal, i) => (
-            <label key={i} className="p-3 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm flex items-center justify-between cursor-pointer">
-              <div className="flex items-center gap-2.5">
-                <input 
-                  type="checkbox" 
-                  defaultChecked={goal.checked}
-                  className="w-4 h-4 border-2 border-black rounded accent-[#008096]" 
-                />
-                <span className={`text-xs font-bold ${goal.checked ? 'line-through text-slate-500' : 'text-slate-900'}`}>
-                  {goal.text}
+          {defaultGoals.map((goal, i) => {
+            const isCompleted = completedGoals.includes(i);
+            return (
+              <label 
+                key={i} 
+                className={`p-3 border-2 border-black rounded-lg neo-box-sm flex items-center justify-between cursor-pointer transition-colors ${isCompleted ? 'bg-slate-100 opacity-60' : 'bg-[#fcf9f8]'}`}
+              >
+                <div className="flex items-center gap-2.5 flex-1">
+                  <input 
+                    type="checkbox" 
+                    checked={isCompleted}
+                    onChange={() => toggleGoal(i)}
+                    className="w-4 h-4 border-2 border-black rounded accent-[#008096]" 
+                  />
+                  <span className={`text-xs font-bold transition-all ${isCompleted ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                    {goal.text}
+                  </span>
+                </div>
+                <span className={`text-[10px] font-bold ${goal.tagColor} border border-black px-1.5 py-0.5 rounded flex-shrink-0`}>
+                  {goal.tag}
                 </span>
-              </div>
-              <span className={`text-[10px] font-bold ${goal.tagColor} border border-black px-1.5 py-0.5 rounded`}>
-                {goal.tag}
-              </span>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
       </div>
 
@@ -62,7 +81,7 @@ export function StudyDetails({ task, onClose, onEdit, onFinish }: StudyDetailsPr
           <span>🏛️</span> Professor Cue & Syllabus Note
         </div>
         <p className="text-xs font-medium font-sans text-slate-700 leading-relaxed">
-          Midterm Exam 2 includes Grignard reagents and alpha-beta unsaturated carbonyls. Verify resonance stability prior to mechanism diagram submissions.
+          {task.details?.notes || 'Midterm Exam 2 includes Grignard reagents and alpha-beta unsaturated carbonyls. Verify resonance stability prior to mechanism diagram submissions.'}
         </p>
       </div>
 

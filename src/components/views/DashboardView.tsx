@@ -71,7 +71,7 @@ export function DashboardView({ tasks, onOpenModal, onTaskClick }: DashboardView
               day={day} 
               tasks={getTasksForDay(day.name)} 
               onTaskClick={onTaskClick}
-              onAddTask={() => onOpenModal('training-form')} // Simplified for demo
+              onAddTask={() => onOpenModal('other-form')} // Simplified for demo
             />
           ))}
         </div>

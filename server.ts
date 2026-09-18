@@ -6,6 +6,7 @@ import { createServer as createViteServer } from 'vite';
 import { connectDB } from './src/db/connection.js';
 import { router as taskRoutes } from './src/routes/taskRoutes.js';
 import { router as userRoutes } from './src/routes/userRoutes.js';
+import { errorHandler, notFound } from './src/middleware/errorMiddleware.js';
 
 async function startServer() {
   const app = express();
@@ -22,6 +23,12 @@ async function startServer() {
   
   // "Any URL that starts with /api/users should be handled by userRoutes"
   app.use('/api/users', userRoutes);
+
+  // If a request starts with /api/ but doesn't match the two routes above, it's a 404!
+  app.use('/api', notFound);
+
+  // Global Error Handler MUST be placed after all routes
+  app.use(errorHandler);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

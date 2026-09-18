@@ -18,17 +18,34 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    // Only try to fetch tasks if we are actually on the dashboard 
+    // (meaning we have logged in and got our token)
+    if (currentView === 'dashboard') {
+      fetchTasks();
+    }
+  }, [currentView]);
 
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/tasks');
+      // 1. Get the digital ID card from the browser's vault
+      const token = localStorage.getItem('token');
+      
+      const res = await fetch('/api/tasks', {
+        // 2. Attach the token to the request headers
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!res.ok) throw new Error('Not authorized');
+      
       const data = await res.json();
       setTasks(data);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
+      // If the token is fake or expired, boot them back to login!
+      setCurrentView('login');
     } finally {
       setIsLoading(false);
     }
@@ -39,17 +56,23 @@ export default function App() {
   };
 
   const handleReset = () => {
+    // To properly "log out", we delete the token from the vault!
+    localStorage.removeItem('token');
     setCurrentView('login');
     setActiveModal(null);
     setActiveTask(null);
-    fetchTasks(); // Reload from backend on reset
+    setTasks([]); // Clear the tasks from memory
   };
 
   const handleAddTask = async (newTaskData: Omit<Task, 'id'>) => {
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Must send token here too!
+        },
         body: JSON.stringify(newTaskData)
       });
       const savedTask = await res.json();
@@ -71,7 +94,13 @@ export default function App() {
 
   const handleFinishTask = async (id: string) => {
     try {
-      await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      await fetch(`/api/tasks/${id}`, { 
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}` // And here!
+        }
+      });
       setTasks(tasks.filter(task => task.id !== id));
       setActiveModal(null);
       setActiveTask(null);
