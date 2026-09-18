@@ -1,8 +1,11 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import mongoose from 'mongoose';
-import { initialTasks } from './src/data.js';
+
+// Import our database and route modules
+import { connectDB } from './src/db/connection.js';
+import { router as taskRoutes } from './src/routes/taskRoutes.js';
+import { router as userRoutes } from './src/routes/userRoutes.js';
 
 async function startServer() {
   const app = express();
@@ -10,79 +13,15 @@ async function startServer() {
 
   app.use(express.json());
 
-  // MongoDB Connection
-  const MONGODB_URI = process.env.MONGODB_URI;
-  let dbConnected = false;
-  let fallbackTasks = [...initialTasks];
+  // Connect to MongoDB
+  await connectDB();
 
-  if (MONGODB_URI) {
-    try {
-      await mongoose.connect(MONGODB_URI);
-      console.log('Connected to MongoDB');
-      dbConnected = true;
-    } catch (err) {
-      console.error('MongoDB connection error. Falling back to in-memory.', err);
-    }
-  } else {
-    console.warn('MONGODB_URI not found. Falling back to in-memory storage.');
-  }
-
-  const taskSchema = new mongoose.Schema({
-    title: String,
-    category: String,
-    day: String,
-    time: String,
-    duration: String,
-    colorTint: String,
-    subtitle: String,
-    details: mongoose.Schema.Types.Mixed,
-  }, { timestamps: true });
-
-  const Task = mongoose.model('Task', taskSchema);
-
-  // API Routes
-  app.get('/api/tasks', async (req, res) => {
-    if (dbConnected) {
-      try {
-        const tasks = await Task.find();
-        res.json(tasks.map(t => ({ ...t.toObject(), id: t._id.toString() })));
-      } catch (e) {
-        res.status(500).json({ error: 'Database error' });
-      }
-    } else {
-      res.json(fallbackTasks);
-    }
-  });
-
-  app.post('/api/tasks', async (req, res) => {
-    if (dbConnected) {
-      try {
-        const newTask = new Task(req.body);
-        await newTask.save();
-        res.json({ ...newTask.toObject(), id: newTask._id.toString() });
-      } catch (e) {
-        res.status(500).json({ error: 'Database error' });
-      }
-    } else {
-      const newTask = { ...req.body, id: `task-${Date.now()}` };
-      fallbackTasks.push(newTask);
-      res.json(newTask);
-    }
-  });
-
-  app.delete('/api/tasks/:id', async (req, res) => {
-    if (dbConnected) {
-      try {
-        await Task.findByIdAndDelete(req.params.id);
-        res.json({ success: true });
-      } catch (e) {
-        res.status(500).json({ error: 'Database error' });
-      }
-    } else {
-      fallbackTasks = fallbackTasks.filter(t => t.id !== req.params.id);
-      res.json({ success: true });
-    }
-  });
+  // API Routes:
+  // We tell Express: "Any URL that starts with /api/tasks should be handled by taskRoutes"
+  app.use('/api/tasks', taskRoutes);
+  
+  // "Any URL that starts with /api/users should be handled by userRoutes"
+  app.use('/api/users', userRoutes);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
