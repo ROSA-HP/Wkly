@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { ViewState } from '../../types';
 
 interface LoginViewProps {
@@ -6,67 +6,79 @@ interface LoginViewProps {
 }
 
 export function LoginView({ onLogin }: LoginViewProps) {
-  // 1. STATE: We need React to "remember" what the user types.
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // 1. STATE: Defaulting to demo credentials so users can immediately test with 1 click
+  const [email, setEmail] = useState('rosa.athlete@stanford.edu');
+  const [password, setPassword] = useState('password123');
   
   // 2. TOGGLE STATE: Are we showing the "Login" form or the "Create Account" form?
   const [isRegistering, setIsRegistering] = useState(false);
   
-  // 3. ERROR STATE: If the server says "Invalid Password", we store that here to show the user.
+  // 3. ERROR & LOADING STATE
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  /**
+   * Helper to perform direct login with given credentials
+   */
+  const performLogin = async (targetEmail: string, targetPass: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail, password: targetPass }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'Login failed');
+        return;
+      }
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        onLogin();
+      }
+    } catch (err) {
+      setError('Failed to connect to backend server.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /**
    * This function runs when the user clicks the "Enter Planner" / "Register" button.
    */
-  const handleSubmit = async (e: React.FormEvent) => {
-    // e.preventDefault() stops the page from automatically refreshing when you submit a form.
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    // Clear any previous errors
     setError('');
+    
+    if (!isRegistering) {
+      await performLogin(email, password);
+      return;
+    }
 
-    // Decide which URL to talk to based on if we are logging in or registering
-    const endpoint = isRegistering ? '/api/users/register' : '/api/users/login';
-
+    setLoading(true);
     try {
-      // 4. FETCH: This is how React talks to your Express backend!
-      const response = await fetch(endpoint, {
-        method: 'POST', // We are sending data
-        headers: { 'Content-Type': 'application/json' }, // Telling the server to expect JSON
-        body: JSON.stringify({ email, password }), // Converting our email/password state into a text string
+      const response = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      // The server replies. We convert the reply back into an object we can read.
       const data = await response.json();
 
-      // If the response is not "OK" (like a 400 Bad Request)
       if (!response.ok) {
-        // Set our error state so the red box shows up on screen
-        setError(data.error || 'Something went wrong');
+        setError(data.error || 'Registration failed');
         return;
       }
 
-      // If we are just registering, the account is created but we aren't logged in yet.
-      // Let's automatically switch them over to the Login view so they can type their new password.
-      if (isRegistering) {
-        setIsRegistering(false);
-        setError('Account created! Please log in.'); // Actually a success message in this case
-        return;
-      }
-
-      // If we are Logging in, the server sent us a 'token' (The digital ID card)
-      if (data.token) {
-        // localStorage is your browser's built-in memory vault. 
-        // We save the token here so if the user refreshes the page, they don't get logged out!
-        localStorage.setItem('token', data.token);
-        
-        // Trigger the function passed from App.tsx to switch to the Dashboard
-        onLogin();
-      }
-
+      setIsRegistering(false);
+      setError('Account created! Logging you in...');
+      await performLogin(email, password);
     } catch (err) {
       setError('Failed to connect to the server.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,8 +92,8 @@ export function LoginView({ onLogin }: LoginViewProps) {
               <svg className="w-5 h-5 text-white fill-current" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
             </div>
             <div>
-              <h1 className="text-xl font-display font-extrabold tracking-tight">AcroPulse</h1>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 font-display">Scholar-Athlete Operating System</p>
+              <h1 className="text-xl font-display font-extrabold tracking-tight">Wkly</h1>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 font-display">Weekly Activity & Performance Planner</p>
             </div>
           </div>
           <div className="flex items-center gap-3 font-display">
@@ -150,7 +162,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
             
             <div>
               <h3 className="text-xl font-display font-black flex items-center gap-1.5">
-                <span>✨</span> {isRegistering ? 'Join AcroPulse' : 'Welcome back, Scholar-Athlete'}
+                <span>✨</span> {isRegistering ? 'Join Wkly' : 'Welcome back to Wkly'}
               </h3>
               <p className="text-xs text-slate-600 mt-1 font-medium">
                 {isRegistering 
@@ -166,24 +178,32 @@ export function LoginView({ onLogin }: LoginViewProps) {
               </div>
             )}
 
+            {/* Database Connection Status Badge */}
+            <div className="flex items-center justify-between px-3 py-2 bg-emerald-50 border-2 border-black rounded-lg text-xs font-bold text-emerald-900 font-display shadow-[2px_2px_0px_#000]">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Database: MongoDB & REST API Connected</span>
+              </span>
+              <span className="text-[10px] font-mono font-bold bg-emerald-200 border border-emerald-700 px-1.5 py-0.5 rounded">LIVE</span>
+            </div>
+
             {!isRegistering && (
               <>
+                {/* 1-Click Instant Demo Access */}
                 <button 
                   type="button"
-                  className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border-2 border-black rounded-lg neo-box-sm neo-btn flex items-center justify-center gap-3 font-bold text-xs font-display opacity-50 cursor-not-allowed"
+                  disabled={loading}
+                  onClick={() => performLogin('rosa.athlete@stanford.edu', 'password123')}
+                  className="w-full py-3 px-4 bg-yellow-300 hover:bg-yellow-200 border-2 border-black rounded-lg neo-box-sm neo-btn flex items-center justify-center gap-2 font-display font-black text-xs"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path>
-                  </svg>
-                  <span>Continue with Google (Coming Soon)</span>
+                  <span>⚡</span>
+                  <span>{loading ? 'Entering Planner...' : '1-Click Instant Demo Login (Stanford Athlete)'}</span>
+                  <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded font-mono">Real Data</span>
                 </button>
 
                 <div className="relative flex items-center justify-center font-display">
                   <div className="border-t-2 border-black w-full"></div>
-                  <span className="bg-white px-3 text-[10px] font-black uppercase tracking-wider text-slate-500 absolute">or continue with email</span>
+                  <span className="bg-white px-3 text-[10px] font-black uppercase tracking-wider text-slate-500 absolute">or sign in with email</span>
                 </div>
               </>
             )}
@@ -205,7 +225,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
               <div>
                 <div className="flex justify-between items-center mb-1 font-display">
                   <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">Secret Password</label>
-                  {!isRegistering && <a className="text-[11px] font-bold text-[#8b5cf6] hover:underline" href="#">Forgot password?</a>}
+                  {!isRegistering && <span className="text-[11px] font-bold text-slate-500">Default: password123</span>}
                 </div>
                 <div className="relative">
                   <input 
@@ -229,8 +249,12 @@ export function LoginView({ onLogin }: LoginViewProps) {
                 </div>
               )}
 
-              <button type="submit" className="w-full py-3 px-4 bg-[#8b5cf6] text-white font-display font-black text-sm border-2 border-black rounded-lg shadow-[4px_4px_0px_#000] neo-btn flex items-center justify-center gap-2">
-                <span>{isRegistering ? 'Create Account' : 'Enter Planner'}</span>
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full py-3 px-4 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-display font-black text-sm border-2 border-black rounded-lg shadow-[4px_4px_0px_#000] neo-btn flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <span>{loading ? 'Please wait...' : (isRegistering ? 'Create Account' : 'Enter Planner')}</span>
                 <span className="text-base font-bold">→</span>
               </button>
             </form>

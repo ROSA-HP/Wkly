@@ -1,13 +1,48 @@
 import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { User } from '../db/models/User.js';
 
 export const router = express.Router();
 
+// In-memory fallback users for development when MongoDB service is offline
+interface FallbackUser {
+  id: string;
+  email: string;
+  password: string;
+}
+const fallbackUsers: FallbackUser[] = [];
+
 // A secret key used to lock and unlock the login tokens. 
 // (In a real app, you would put this in your .env file)
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-development-key';
+
+export const initDemoUser = async () => {
+  const demoEmail = 'rosa.athlete@stanford.edu';
+  const demoPass = 'password123';
+  const hashedPassword = await bcrypt.hash(demoPass, 10);
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const existing = await User.findOne({ email: demoEmail });
+      if (!existing) {
+        await User.create({ email: demoEmail, password: hashedPassword });
+        console.log('Demo user seeded into MongoDB:', demoEmail);
+      }
+    } catch (e) {
+      console.warn('Could not seed demo user to Mongo:', e);
+    }
+  }
+
+  if (!fallbackUsers.some(u => u.email.toLowerCase() === demoEmail.toLowerCase())) {
+    fallbackUsers.push({
+      id: 'demo-athlete-1',
+      email: demoEmail,
+      password: hashedPassword
+    });
+  }
+};
 
 /**
  * POST /api/users/register
@@ -15,38 +50,42 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-development-key';
  */
 router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 1. Get the email and password the user typed into the React form
     const { email, password } = req.body;
 
-    // BAD REQUEST VALIDATION: Check if they even sent an email and password!
     if (!email || !password) {
-      res.status(400); // 400 means "Bad Request" - the user forgot something
+      res.status(400);
       return next(new Error('Email and password are required'));
     }
 
-    // 2. Check if a user with this email already exists in the database
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      res.status(400);
-      return next(new Error('Email already in use'));
+    if (mongoose.connection.readyState === 1) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400);
+        return next(new Error('Email already in use'));
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new User({ 
+        email: email, 
+        password: hashedPassword 
+      });
+      await newUser.save();
+    } else {
+      const existing = fallbackUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (existing) {
+        res.status(400);
+        return next(new Error('Email already in use'));
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      fallbackUsers.push({
+        id: `user-${Date.now()}`,
+        email,
+        password: hashedPassword
+      });
     }
 
-    // 3. Hash the password. 
-    // We NEVER save plain text passwords (like "password123"). 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 4. Create the new user and save them to the database
-    const newUser = new User({ 
-      email: email, 
-      password: hashedPassword 
-    });
-    await newUser.save();
-
-    // 5. Send a success message back to React
     res.status(201).json({ message: 'User registered successfully!' });
-
   } catch (error) {
-    // Pass any unexpected database errors to the global Error Handler
     next(error);
   }
 });
@@ -59,34 +98,43 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
   try {
     const { email, password } = req.body;
 
-    // BAD REQUEST VALIDATION
     if (!email || !password) {
       res.status(400);
       return next(new Error('Email and password are required'));
     }
 
-    // 1. Find the user in the database by their email
-    const user = await User.findOne({ email });
-    if (!user) {
-      res.status(400);
-      return next(new Error('Invalid email or password'));
+    let userId: string;
+
+    if (mongoose.connection.readyState === 1) {
+      const user = await User.findOne({ email });
+      if (!user) {
+        res.status(400);
+        return next(new Error('Invalid email or password'));
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        res.status(400);
+        return next(new Error('Invalid email or password'));
+      }
+      userId = user._id.toString();
+    } else {
+      const user = fallbackUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) {
+        res.status(400);
+        return next(new Error('Invalid email or password'));
+      }
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        res.status(400);
+        return next(new Error('Invalid email or password'));
+      }
+      userId = user.id;
     }
 
-    // 2. Compare the password they typed with the scrambled password in the database
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      res.status(400);
-      return next(new Error('Invalid email or password'));
-    }
-
-    // 3. Create an "Auth Token" (a temporary digital ID card). 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '24h' });
-
-    // 4. Send the token back to React
+    const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ token, message: 'Logged in successfully!' });
-
   } catch (error) {
-    // Pass the error down the chain
     next(error);
   }
 });

@@ -5,7 +5,20 @@ import { initialTasks } from '../data.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 export const router = express.Router();
-let fallbackTasks = [...initialTasks];
+interface FallbackTask {
+  id: string;
+  userId?: string;
+  title: string;
+  category: string;
+  day: string;
+  time?: string;
+  duration?: string;
+  colorTint?: string;
+  subtitle?: string;
+  completed?: boolean;
+  details?: any;
+}
+let fallbackTasks: FallbackTask[] = [...initialTasks];
 
 // --- SECURITY GUARD ---
 // By putting requireAuth here, we force EVERY route in this file to pass the security check first.
@@ -18,13 +31,31 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (mongoose.connection.readyState === 1) {
     try {
       // SECURITY UPGRADE: Only find tasks that belong to the logged-in user!
-      const tasks = await Task.find({ userId: req.userId });
+      let tasks = await Task.find({ userId: req.userId });
+      if (tasks.length === 0 && initialTasks.length > 0) {
+        const seedData = initialTasks.map(t => {
+          const { id, ...rest } = t;
+          return { ...rest, userId: req.userId };
+        });
+        const created = await Task.insertMany(seedData);
+        tasks = created as any;
+      }
       res.json(tasks.map(t => ({ ...t.toObject(), id: t._id.toString() })));
     } catch (e) {
       next(e);
     }
   } else {
-    res.json(fallbackTasks);
+    let userTasks = fallbackTasks.filter(t => t.userId === req.userId);
+    if (userTasks.length === 0 && initialTasks.length > 0) {
+      const seeded: FallbackTask[] = initialTasks.map(t => ({
+        ...t,
+        id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        userId: req.userId
+      }));
+      fallbackTasks.push(...seeded);
+      userTasks = seeded;
+    }
+    res.json(userTasks);
   }
 });
 
@@ -53,9 +84,46 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
       next(e);
     }
   } else {
-    const newTask = { ...req.body, id: `task-${Date.now()}` };
+    const newTask: FallbackTask = { 
+      ...req.body, 
+      id: `task-${Date.now()}`,
+      userId: req.userId 
+    };
     fallbackTasks.push(newTask);
     res.json(newTask);
+  }
+});
+
+/**
+ * PUT /api/tasks/:id
+ * Updates an existing task (title, details, completed status, etc.)
+ */
+router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const updatedTask = await Task.findOneAndUpdate(
+        { _id: req.params.id, userId: req.userId },
+        { $set: req.body },
+        { new: true }
+      );
+
+      if (!updatedTask) {
+        res.status(404);
+        return next(new Error('Task not found or unauthorized to edit'));
+      }
+
+      res.json({ ...updatedTask.toObject(), id: updatedTask._id.toString() });
+    } catch (e) {
+      next(e);
+    }
+  } else {
+    const index = fallbackTasks.findIndex(t => t.id === req.params.id);
+    if (index === -1) {
+      res.status(404);
+      return next(new Error('Task not found'));
+    }
+    fallbackTasks[index] = { ...fallbackTasks[index], ...req.body };
+    res.json(fallbackTasks[index]);
   }
 });
 

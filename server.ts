@@ -5,7 +5,7 @@ import { createServer as createViteServer } from 'vite';
 // Import our database and route modules
 import { connectDB } from './src/db/connection.js';
 import { router as taskRoutes } from './src/routes/taskRoutes.js';
-import { router as userRoutes } from './src/routes/userRoutes.js';
+import { router as userRoutes, initDemoUser } from './src/routes/userRoutes.js';
 import { errorHandler, notFound } from './src/middleware/errorMiddleware.js';
 
 async function startServer() {
@@ -16,6 +16,7 @@ async function startServer() {
 
   // Connect to MongoDB
   await connectDB();
+  await initDemoUser();
 
   // API Routes:
   // We tell Express: "Any URL that starts with /api/tasks should be handled by taskRoutes"

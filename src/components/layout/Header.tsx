@@ -18,9 +18,9 @@ export function Header({ currentView, onReset, onNavigate }: HeaderProps) {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 bg-black text-white px-2.5 py-1 rounded font-bold text-xs tracking-wider">
           <svg className="w-3.5 h-3.5 text-yellow-300 fill-current" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-          <span>ACROPULSE</span>
+          <span>WKLY</span>
         </div>
-        <span className="text-xs font-semibold text-slate-500 hidden xl:inline">Scholar-Athlete End-to-End Suite</span>
+        <span className="text-xs font-semibold text-slate-500 hidden xl:inline">Weekly Planner & Scheduler</span>
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto text-[11px] font-bold py-1 max-w-full scrollbar-custom">

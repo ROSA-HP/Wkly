@@ -1,44 +1,58 @@
-import { useState } from 'react';
-import { Task, DayOfWeek } from '../../types';
+import { useState, FormEvent } from 'react';
+import { Task, DayOfWeek, ExerciseItem } from '../../types';
 
 interface TrainingFormProps {
+  initialTask?: Task | null;
+  defaultDay?: DayOfWeek;
   onSave: (task: Omit<Task, 'id'>) => void;
   onClose: () => void;
 }
 
-export function TrainingForm({ onSave, onClose }: TrainingFormProps) {
-  const [title, setTitle] = useState('Karate Conditioning (Kata & Sparring)');
-  const [day, setDay] = useState<DayOfWeek>('Tuesday');
-  const [time, setTime] = useState('16:00 (60 min)');
-  const [colorTint, setColorTint] = useState('bg-[#fce7f3]');
-  const [notes, setNotes] = useState('Focus on hip extension and snap. Ensure 90s full recovery between explosive efforts.');
+export function TrainingForm({ initialTask, defaultDay, onSave, onClose }: TrainingFormProps) {
+  const [title, setTitle] = useState(initialTask?.title || '');
+  const [day, setDay] = useState<DayOfWeek>(initialTask?.day || defaultDay || 'Monday');
+  const [time, setTime] = useState(initialTask?.time ? `${initialTask.time} (${initialTask.duration || '60 min'})` : '08:00 (60 min)');
+  const [colorTint, setColorTint] = useState(initialTask?.colorTint || 'bg-[#fce7f3]');
+  const [notes, setNotes] = useState(initialTask?.details?.notes || '');
 
-  const [exercises, setExercises] = useState([
-    { id: 1, name: '1. Explosive Pull-ups (+15kg)', desc: 'Bodyweight + vest', sets: 4, reps: 8, rpe: 'RPE 8.5', rpeColor: 'bg-slate-100' },
-    { id: 2, name: '2. Box Jumps (30in Plyometric)', desc: 'Maximum explosive velocity', sets: 5, reps: 6, rpe: 'Twitch', rpeColor: 'bg-pink-100' }
-  ]);
+  // Start with empty exercises checklist unless editing existing task
+  const [exercises, setExercises] = useState<ExerciseItem[]>(
+    initialTask?.details?.exercises ? [...initialTask.details.exercises] : []
+  );
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    const cleanTime = time.includes(' ') ? time.split(' ')[0] : time;
+    const cleanDuration = time.includes('(') ? time.split('(')[1].replace(')', '') : '60 min';
+
     onSave({
-      title,
+      title: title.trim() || 'Training Session',
       category: 'TRAINING',
       day,
-      time: time.split(' ')[0],
-      duration: time,
+      time: cleanTime,
+      duration: cleanDuration,
       colorTint,
-      subtitle: 'Sets & drills scheduled',
+      subtitle: exercises.length > 0 ? `${exercises.length} Drills Scheduled` : 'Training Workout',
       details: { exercises, notes }
     });
   };
 
   const addExerciseRow = () => {
+    const nextNum = exercises.length + 1;
     setExercises([...exercises, {
-      id: exercises.length + 1,
-      name: `${exercises.length + 1}. Kettlebell Dynamic Snatch`,
-      desc: 'Power endurance • 24kg',
-      sets: 3, reps: 10, rpe: 'Power', rpeColor: 'bg-purple-100'
+      id: Date.now(),
+      name: `Exercise ${nextNum}`,
+      desc: 'Target weight / tempo',
+      sets: 3,
+      reps: 10,
+      rpe: 'RPE 8',
+      rpeColor: 'bg-yellow-100',
+      completed: false
     }]);
+  };
+
+  const removeExerciseRow = (id: number | string) => {
+    setExercises(exercises.filter(ex => ex.id !== id));
   };
 
   return (
@@ -48,6 +62,7 @@ export function TrainingForm({ onSave, onClose }: TrainingFormProps) {
         <input 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Upper Body Hypertrophy, Sprint Drills, Conditioning"
           className="w-full text-xs font-bold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none" 
           required 
           type="text" 
@@ -72,6 +87,7 @@ export function TrainingForm({ onSave, onClose }: TrainingFormProps) {
           <input 
             value={time}
             onChange={(e) => setTime(e.target.value)}
+            placeholder="08:00 (60 min)"
             className="w-full text-xs font-bold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none" 
             type="text" 
           />
@@ -105,44 +121,92 @@ export function TrainingForm({ onSave, onClose }: TrainingFormProps) {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800">Exercise Drills (Sets × Reps)</label>
-          <span className="text-[10px] font-bold text-slate-500">Compact Holders</span>
+          <span className="text-[10px] font-bold text-slate-500">
+            {exercises.length} {exercises.length === 1 ? 'drill' : 'drills'}
+          </span>
         </div>
-        <div className="space-y-2">
-          {exercises.map((ex, i) => (
-            <div key={ex.id} className="p-2.5 bg-white border-2 border-black rounded-lg neo-box-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <div className="flex-1 w-full sm:w-auto">
-                <input 
-                  type="text" 
-                  value={ex.name} 
-                  onChange={(e) => {
-                    const newEx = [...exercises];
-                    newEx[i].name = e.target.value;
-                    setExercises(newEx);
-                  }}
-                  className="w-full text-xs font-bold bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-black" 
-                />
-                <span className="text-[10px] text-slate-500 font-sans">{ex.desc}</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-2 sm:mt-0">
-                <div className="flex items-center gap-1 bg-[#fcf9f8] border-2 border-black rounded px-2 py-1 shadow-[1px_1px_0px_#000]">
-                  <span className="text-[9px] font-black text-slate-400 uppercase">Sets</span>
-                  <input type="number" value={ex.sets} readOnly className="w-6 text-center text-xs font-black bg-transparent focus:outline-none" />
-                  <span className="text-xs font-black text-slate-700 px-0.5">×</span>
-                  <span className="text-[9px] font-black text-slate-400 uppercase">Reps</span>
-                  <input type="number" value={ex.reps} readOnly className="w-6 text-center text-xs font-black bg-transparent focus:outline-none" />
+
+        {exercises.length === 0 ? (
+          <div className="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg text-center text-xs text-slate-500 font-sans">
+            No exercise drills added yet. Click below to add your sets and reps.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {exercises.map((ex, i) => (
+              <div key={ex.id} className="p-2.5 bg-white border-2 border-black rounded-lg neo-box-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="flex-1 w-full sm:w-auto">
+                  <input 
+                    type="text" 
+                    value={ex.name} 
+                    placeholder="Exercise name"
+                    onChange={(e) => {
+                      const newEx = [...exercises];
+                      newEx[i].name = e.target.value;
+                      setExercises(newEx);
+                    }}
+                    className="w-full text-xs font-bold bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-black" 
+                  />
+                  <input 
+                    type="text" 
+                    value={ex.desc || ''} 
+                    placeholder="Notes (e.g. Load, Tempo, RPE)"
+                    onChange={(e) => {
+                      const newEx = [...exercises];
+                      newEx[i].desc = e.target.value;
+                      setExercises(newEx);
+                    }}
+                    className="w-full text-[10px] text-slate-500 font-sans bg-transparent border-none focus:outline-none" 
+                  />
                 </div>
-                <span className={`text-[10px] font-bold ${ex.rpeColor} border border-black px-1.5 py-0.5 rounded`}>{ex.rpe}</span>
+                <div className="flex items-center gap-1.5 mt-2 sm:mt-0">
+                  <div className="flex items-center gap-1 bg-[#fcf9f8] border-2 border-black rounded px-2 py-1 shadow-[1px_1px_0px_#000]">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Sets</span>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value={ex.sets || 3} 
+                      onChange={(e) => {
+                        const newEx = [...exercises];
+                        newEx[i].sets = parseInt(e.target.value) || 1;
+                        setExercises(newEx);
+                      }}
+                      className="w-8 text-center text-xs font-black bg-transparent focus:outline-none" 
+                    />
+                    <span className="text-xs font-black text-slate-700 px-0.5">×</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Reps</span>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      value={ex.reps || 10} 
+                      onChange={(e) => {
+                        const newEx = [...exercises];
+                        newEx[i].reps = parseInt(e.target.value) || 1;
+                        setExercises(newEx);
+                      }}
+                      className="w-8 text-center text-xs font-black bg-transparent focus:outline-none" 
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeExerciseRow(ex.id)}
+                    title="Remove drill"
+                    className="w-6 h-6 rounded bg-red-100 hover:bg-red-200 border border-black flex items-center justify-center text-xs font-bold text-red-700"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
         <button 
           type="button" 
           onClick={addExerciseRow}
           className="w-full mt-2 py-2 bg-[#f6f3f2] hover:bg-white border-2 border-dashed border-black rounded-lg text-xs font-black text-slate-700 hover:text-black transition-colors flex items-center justify-center gap-1.5"
         >
           <span>+</span>
-          <span>Add Another Exercise Drill</span>
+          <span>Add Exercise Drill</span>
         </button>
       </div>
 
@@ -151,6 +215,7 @@ export function TrainingForm({ onSave, onClose }: TrainingFormProps) {
         <textarea 
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+          placeholder="e.g. Ensure full recovery between sets. Focus on velocity and form."
           className="w-full text-xs font-medium font-sans px-3 py-2 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none" 
           rows={2}
         />
@@ -161,7 +226,7 @@ export function TrainingForm({ onSave, onClose }: TrainingFormProps) {
           Cancel
         </button>
         <button type="submit" className="px-5 py-2 bg-[#8b5cf6] text-white border-2 border-black rounded-lg font-black text-xs shadow-[3px_3px_0px_#000] neo-btn flex items-center gap-1.5">
-          <span>Save & Add to Schedule</span>
+          <span>{initialTask ? 'Update Session' : 'Save & Add to Schedule'}</span>
           <span>✓</span>
         </button>
       </div>

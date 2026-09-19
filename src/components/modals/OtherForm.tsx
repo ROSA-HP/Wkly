@@ -1,38 +1,58 @@
-import { useState } from 'react';
-import { Task, DayOfWeek } from '../../types';
+import { useState, FormEvent } from 'react';
+import { Task, DayOfWeek, GoalItem } from '../../types';
 
 interface OtherFormProps {
+  initialTask?: Task | null;
+  defaultDay?: DayOfWeek;
   onSave: (task: Omit<Task, 'id'>) => void;
   onClose: () => void;
 }
 
-export function OtherForm({ onSave, onClose }: OtherFormProps) {
-  const [title, setTitle] = useState('Sports Psychology Visualization & Breathwork');
-  const [tag, setTag] = useState('Sports Psych / Mindset');
-  const [day, setDay] = useState<DayOfWeek>('Tuesday');
-  const [time, setTime] = useState('18:30 (45 mins)');
-  const [colorTint, setColorTint] = useState('bg-[#fed7aa]');
-  const [notes, setNotes] = useState('Pre-match autonomic down-regulation. Pack high-carb electrolyte fuel bottles for Wednesday morning.');
+export function OtherForm({ initialTask, defaultDay, onSave, onClose }: OtherFormProps) {
+  const [title, setTitle] = useState(initialTask?.title || '');
+  const [tag, setTag] = useState(initialTask?.details?.tag || initialTask?.subtitle || 'Life Admin');
+  const [day, setDay] = useState<DayOfWeek>(initialTask?.day || defaultDay || 'Monday');
+  const [time, setTime] = useState(initialTask?.time ? `${initialTask.time} (${initialTask.duration || '30 min'})` : '18:00 (30 min)');
+  const [colorTint, setColorTint] = useState(initialTask?.colorTint || 'bg-[#fed7aa]');
+  const [notes, setNotes] = useState(initialTask?.details?.notes || '');
+  
+  // Checklist for other tasks (starts empty)
+  const [goals, setGoals] = useState<GoalItem[]>(
+    initialTask?.details?.goals ? [...initialTask.details.goals] : []
+  );
 
   const tagsList = [
-    { name: 'Sports Psych / Mindset', icon: '🧠' },
-    { name: 'Nutrition & Prep', icon: '🥗' },
-    { name: 'Team Logistics & Travel', icon: '🚌' },
     { name: 'Life Admin', icon: '🗂️' },
+    { name: 'Nutrition & Meal Prep', icon: '🥗' },
+    { name: 'Team Logistics & Travel', icon: '🚌' },
+    { name: 'Recovery & Physio', icon: '💆' },
+    { name: 'Personal Errands', icon: '🛒' },
+    { name: 'Mindset & Meditation', icon: '🧠' },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    const cleanTime = time.includes(' ') ? time.split(' ')[0] : time;
+    const cleanDuration = time.includes('(') ? time.split('(')[1].replace(')', '') : '30 min';
+
     onSave({
-      title,
+      title: title.trim() || 'Other Activity',
       category: 'OTHER',
       day,
-      time: time.split(' ')[0],
-      duration: time,
+      time: cleanTime,
+      duration: cleanDuration,
       colorTint,
       subtitle: tag,
-      details: { tag, notes }
+      details: { tag, notes, goals }
     });
+  };
+
+  const handleAddGoal = () => {
+    setGoals([...goals, { id: Date.now(), text: '', checked: false }]);
+  };
+
+  const handleRemoveGoal = (id: number | string) => {
+    setGoals(goals.filter(g => g.id !== id));
   };
 
   return (
@@ -42,6 +62,7 @@ export function OtherForm({ onSave, onClose }: OtherFormProps) {
         <input 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Grocery run, Team briefing, Physio appointment"
           className="w-full text-xs font-bold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none" 
           required 
           type="text" 
@@ -50,7 +71,7 @@ export function OtherForm({ onSave, onClose }: OtherFormProps) {
 
       <div>
         <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 mb-1.5">Category Tag</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {tagsList.map(t => (
             <button 
               key={t.name}
@@ -62,7 +83,7 @@ export function OtherForm({ onSave, onClose }: OtherFormProps) {
                   : 'bg-white hover:bg-slate-50 font-bold'
               }`}
             >
-              <span>{t.icon}</span> {t.name}
+              <span>{t.icon}</span> <span className="truncate">{t.name}</span>
             </button>
           ))}
         </div>
@@ -86,6 +107,7 @@ export function OtherForm({ onSave, onClose }: OtherFormProps) {
           <input 
             value={time}
             onChange={(e) => setTime(e.target.value)}
+            placeholder="18:00 (30 min)"
             className="w-full text-xs font-bold px-3 py-2.5 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none" 
             type="text" 
           />
@@ -93,22 +115,83 @@ export function OtherForm({ onSave, onClose }: OtherFormProps) {
       </div>
 
       <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800">Checklist / Action Items</label>
+          <span className="text-[10px] font-bold text-slate-500">
+            {goals.length} {goals.length === 1 ? 'item' : 'items'}
+          </span>
+        </div>
+
+        {goals.length === 0 ? (
+          <div className="p-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg text-center text-xs text-slate-500 font-sans">
+            No action items yet. Click below to add subtasks.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {goals.map((goal, i) => (
+              <div key={goal.id || i} className="p-2 bg-white border-2 border-black rounded-lg neo-box-sm flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={goal.checked}
+                  onChange={() => {
+                    const newGoals = [...goals];
+                    newGoals[i].checked = !newGoals[i].checked;
+                    setGoals(newGoals);
+                  }}
+                  className="w-4 h-4 border-2 border-black rounded accent-amber-500 cursor-pointer" 
+                />
+                <input 
+                  type="text" 
+                  value={goal.text} 
+                  placeholder="e.g. Pick up dry cleaning, pack gym bag"
+                  onChange={(e) => {
+                    const newGoals = [...goals];
+                    newGoals[i].text = e.target.value;
+                    setGoals(newGoals);
+                  }}
+                  className="w-full text-xs font-bold bg-transparent border-none focus:outline-none font-sans" 
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveGoal(goal.id)}
+                  title="Remove item"
+                  className="w-6 h-6 rounded bg-red-100 hover:bg-red-200 border border-black flex items-center justify-center text-xs font-bold text-red-700"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button 
+          type="button" 
+          onClick={handleAddGoal}
+          className="w-full mt-2 py-2 bg-[#f6f3f2] hover:bg-white border-2 border-dashed border-black rounded-lg text-xs font-black text-slate-700 hover:text-black transition-colors flex items-center justify-center gap-1.5"
+        >
+          <span>+ Add Checklist Item</span>
+        </button>
+      </div>
+
+      <div>
         <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 mb-1">Priority & Logistics Notes</label>
         <textarea 
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+          placeholder="e.g. Bring confirmation receipt, parking on 3rd floor"
           className="w-full text-xs font-medium font-sans px-3 py-2 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm focus:bg-white focus:outline-none" 
           rows={2}
         />
       </div>
 
       <div className="p-3 bg-[#fcf9f8] border-2 border-black rounded-lg neo-box-sm">
-        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-800 mb-2">Color Swatch (Amber / Yellow default)</label>
+        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-800 mb-2">Color Swatch</label>
         <div className="flex items-center gap-3">
           {[
             { id: 'amber', colorClass: 'bg-[#fed7aa]' },
             { id: 'lavender', colorClass: 'bg-[#f3e8ff]' },
-            { id: 'yellow', colorClass: 'bg-[#fef08a]' }
+            { id: 'yellow', colorClass: 'bg-[#fef08a]' },
+            { id: 'mint', colorClass: 'bg-[#bbf7d0]' }
           ].map(tint => (
             <label key={tint.id} className="cursor-pointer">
               <input 
@@ -130,7 +213,7 @@ export function OtherForm({ onSave, onClose }: OtherFormProps) {
           Cancel
         </button>
         <button type="submit" className="px-5 py-2 bg-black text-yellow-300 border-2 border-black rounded-lg font-black text-xs shadow-[3px_3px_0px_#000] neo-btn flex items-center gap-1.5">
-          <span>Save Activity</span>
+          <span>{initialTask ? 'Update Activity' : 'Save Activity'}</span>
           <span>✓</span>
         </button>
       </div>

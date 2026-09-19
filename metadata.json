@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Wkly",
+  "description": "Weekly planner and productivity system for scheduling training, academic study blocks, and lifestyle activities.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

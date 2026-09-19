@@ -1,6 +1,7 @@
 import { Task, ModalState, DayOfWeek } from '../../types';
 
 interface TaskCardProps {
+  key?: string;
   task: Task;
   onClick: () => void;
 }
@@ -24,10 +25,11 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 }
 
 interface DayColumnProps {
+  key?: string;
   day: { name: DayOfWeek; date: number; isToday?: boolean };
   tasks: Task[];
   onTaskClick: (task: Task) => void;
-  onAddTask: () => void;
+  onAddTask: (day: DayOfWeek) => void;
 }
 
 export function DayColumn({ day, tasks, onTaskClick, onAddTask }: DayColumnProps) {
@@ -59,7 +61,7 @@ export function DayColumn({ day, tasks, onTaskClick, onAddTask }: DayColumnProps
           ))}
           
           <button 
-            onClick={onAddTask}
+            onClick={() => onAddTask(day.name)}
             className={`w-full py-2 border-2 border-dashed rounded-lg text-[10px] font-display font-extrabold transition-colors ${
               day.isToday 
                 ? 'border-[#8b5cf6] bg-[#f5f3ff] text-[#8b5cf6] hover:bg-[#ede9fe]' 

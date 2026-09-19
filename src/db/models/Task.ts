@@ -19,6 +19,7 @@ const taskSchema = new mongoose.Schema({
   duration: { type: String },
   colorTint: { type: String },
   subtitle: { type: String },
+  completed: { type: Boolean, default: false },
   
   // Mixed allows us to store different sets of details depending on if 
   // it is a Training form (exercises, RPE) or a Study form (focus items)

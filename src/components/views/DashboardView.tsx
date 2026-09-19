@@ -6,6 +6,7 @@ interface DashboardViewProps {
   tasks: Task[];
   onOpenModal: (modal: ModalState) => void;
   onTaskClick: (task: Task) => void;
+  onAddTaskDay?: (day: DayOfWeek) => void;
 }
 
 const WEEK_DAYS: { name: DayOfWeek; date: number; isToday?: boolean }[] = [
@@ -18,7 +19,7 @@ const WEEK_DAYS: { name: DayOfWeek; date: number; isToday?: boolean }[] = [
   { name: 'Sunday', date: 20 },
 ];
 
-export function DashboardView({ tasks, onOpenModal, onTaskClick }: DashboardViewProps) {
+export function DashboardView({ tasks, onOpenModal, onTaskClick, onAddTaskDay }: DashboardViewProps) {
   const getTasksForDay = (dayName: DayOfWeek) => tasks.filter(task => task.day === dayName);
   
   const trainingCount = tasks.filter(task => task.category === 'TRAINING').length;
@@ -71,7 +72,13 @@ export function DashboardView({ tasks, onOpenModal, onTaskClick }: DashboardView
               day={day} 
               tasks={getTasksForDay(day.name)} 
               onTaskClick={onTaskClick}
-              onAddTask={() => onOpenModal('other-form')} // Simplified for demo
+              onAddTask={(dayName) => {
+                if (onAddTaskDay) {
+                  onAddTaskDay(dayName);
+                } else {
+                  onOpenModal('other-form');
+                }
+              }}
             />
           ))}
         </div>
