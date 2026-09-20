@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 // Import our database and route modules
 import { connectDB } from './src/db/connection.js';
 import { router as taskRoutes } from './src/routes/taskRoutes.js';
