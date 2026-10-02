@@ -2,35 +2,57 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-// Import our database and route modules
+// Import our database, security middlewares, and route modules
 import { connectDB } from './src/db/connection.js';
 import { router as taskRoutes } from './src/routes/taskRoutes.js';
 import { router as userRoutes, initDemoUser } from './src/routes/userRoutes.js';
 import { errorHandler, notFound } from './src/middleware/errorMiddleware.js';
+import {
+  securityHeadersMiddleware,
+  corsPolicyMiddleware,
+  payloadSanitizerMiddleware,
+  apiRateLimiter,
+} from './src/middleware/securityMiddleware.js';
 
-async function startServer() {
+export function createExpressApp() {
   const app = express();
-  const PORT = 3000;
 
-  app.use(express.json());
+  // Disable server fingerprinting header
+  app.disable('x-powered-by');
 
-  // Connect to MongoDB
-  await connectDB();
-  await initDemoUser();
+  // 1. DAST & TLS/HSTS Security Headers + Strict CORS Policy
+  app.use(securityHeadersMiddleware);
+  app.use(corsPolicyMiddleware);
 
-  // API Routes:
-  // We tell Express: "Any URL that starts with /api/tasks should be handled by taskRoutes"
+  // 2. Bounded JSON body parser (32KB max to prevent memory exhaustion / DoS)
+  app.use(express.json({ limit: '32kb', strict: true }));
+
+  // 3. Deep Payload Sanitizer (NoSQL Injection, Prototype Pollution, XSS, Depth Check)
+  app.use('/api', payloadSanitizerMiddleware);
+
+  // 4. General API Rate Limiter
+  app.use('/api', apiRateLimiter);
+
+  // 5. API Routes
   app.use('/api/tasks', taskRoutes);
-  
-  // "Any URL that starts with /api/users should be handled by userRoutes"
   app.use('/api/users', userRoutes);
 
-  // If a request starts with /api/ but doesn't match the two routes above, it's a 404!
+  // 6. 404 Not Found for unmatched /api routes
   app.use('/api', notFound);
 
-  // Global Error Handler MUST be placed after all routes
+  // 7. Global Error Handler
   app.use(errorHandler);
+
+  return app;
+}
+
+async function startServer() {
+  const app = createExpressApp();
+  const PORT = 3000;
+
+  // Connect to MongoDB & seed demo user
+  await connectDB();
+  await initDemoUser();
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
@@ -42,8 +64,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    // Note: express ^4.21.2 uses * for catchall
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
@@ -53,4 +74,7 @@ async function startServer() {
   });
 }
 
-startServer();
+const isTestFile = process.argv.some((arg) => arg.includes('security.test'));
+if (process.env.WKLY_TEST_MODE !== 'true' && !isTestFile) {
+  startServer();
+}
