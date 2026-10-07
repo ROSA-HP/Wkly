@@ -42,7 +42,7 @@ const TASK_OPTIONS: TaskOption[] = [
     id: 'training',
     title: 'Training Session',
     badge: 'LIFTS & DRILLS',
-    icon: '🏋️',
+    icon: 'fitness_center',
     subtitle: 'Strength & Periodization',
     description: 'Drills, sets, reps, load weights, and live RPE exertion.',
     chips: ['Strength Drills', 'Sets & Reps', 'Live RPE'],
@@ -59,7 +59,7 @@ const TASK_OPTIONS: TaskOption[] = [
     id: 'study',
     title: 'Study Session',
     badge: 'ACADEMICS',
-    icon: '📖',
+    icon: 'menu_book',
     subtitle: 'Coursework & Canvas',
     description: 'Academic focus blocks, course code, exams & problem sets.',
     chips: ['Canvas Sync', 'Course Code', 'Study Block'],
@@ -76,7 +76,7 @@ const TASK_OPTIONS: TaskOption[] = [
     id: 'other',
     title: 'Other Activity',
     badge: 'LIFE & LOGISTICS',
-    icon: '⚙️',
+    icon: 'settings',
     subtitle: 'Physio & Logistics',
     description: 'Nutrition, physio rehab, team meetings, rest and sleep.',
     chips: ['Physio & Rehab', 'Nutrition', 'Meetings'],
@@ -93,7 +93,7 @@ const TASK_OPTIONS: TaskOption[] = [
     id: 'flexible',
     title: 'Flexible Task',
     badge: 'DYNAMIC CANVAS',
-    icon: '⚡',
+    icon: 'bolt',
     subtitle: 'Custom Attributes',
     description: 'Dynamic custom blocks, checklist tags, and freeform canvas.',
     chips: ['Custom Fields', 'Dynamic Tags', 'Checklists'],
@@ -140,8 +140,8 @@ export function TaskChooserModal({
         <div className="shrink-0 bg-[#FCF9F8] dark:bg-[#1E232E] border-b-2 border-black dark:border-[#383F50] px-3.5 py-2.5 flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 bg-[#8B5CF6] dark:bg-[#A855F7] text-white dark:text-[#0B0D11] border-2 border-black dark:border-white rounded text-[11px] font-black shadow-[1.5px_1.5px_0px_#000] flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-300 dark:bg-white animate-pulse" />
-              <span>+ NEW ACTIVITY</span>
+              <span className="material-symbols-outlined text-[13px] leading-none text-yellow-300 dark:text-white">add</span>
+              <span>NEW ACTIVITY</span>
             </span>
 
             {/* Target Day Picker Dropdown Pill */}
@@ -167,10 +167,10 @@ export function TaskChooserModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-7 h-7 rounded border-2 border-black dark:border-[#383F50] bg-white dark:bg-[#10141C] text-slate-900 dark:text-[#F3F4F6] hover:bg-rose-100 dark:hover:bg-[#2A161D] dark:hover:text-[#FB7185] flex items-center justify-center font-black text-xs shadow-[1.5px_1.5px_0px_#000] transition-colors cursor-pointer"
+            className="w-7 h-7 rounded border-2 border-black dark:border-[#383F50] bg-white dark:bg-[#10141C] text-slate-900 dark:text-[#F3F4F6] hover:bg-rose-100 dark:hover:bg-[#2A161D] dark:hover:text-[#FB7185] flex items-center justify-center shadow-[1.5px_1.5px_0px_#000] transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            ✕
+            <span className="material-symbols-outlined text-[16px] leading-none">close</span>
           </button>
         </div>
 
@@ -197,7 +197,7 @@ export function TaskChooserModal({
                 <div>
                   {/* Card Header with Icon & Badge */}
                   <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                    <span className="text-xl transform group-hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined text-2xl transform group-hover:scale-110 transition-transform text-slate-900 dark:text-[#F3F4F6]">
                       {opt.icon}
                     </span>
                     <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider border border-black dark:border-white/20 shadow-[1px_1px_0_#000] ${opt.pillColor} ${opt.darkPillColor}`}>
@@ -235,8 +235,8 @@ export function TaskChooserModal({
 
           {/* Bottom Footnote & Cancel */}
           <div className="pt-1 flex items-center justify-between text-[10px] font-medium text-slate-500 dark:text-[#9CA3AF]">
-            <span className="flex items-center gap-1">
-              <span>💡</span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-amber-500">lightbulb</span>
               <span>Need custom layout? Choose <strong>Flexible Task</strong>.</span>
             </span>
             <button

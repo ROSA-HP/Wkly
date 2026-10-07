@@ -22,7 +22,6 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
-    "mongoos": "^0.0.1-security",
     "mongoose": "^9.10.1",
     "motion": "^12.23.24",
     "react": "^19.3.0",

@@ -1,4 +1,5 @@
 import { useState, FormEvent } from 'react';
+import { WklyIcon } from '../layout/WklyLogo';
 
 interface LoginViewProps {
   onLogin: () => void;
@@ -76,20 +77,18 @@ export function LoginView({ onLogin }: LoginViewProps) {
         {/* Sub-navigation header inside Login screen */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 mb-6 border-b-2 border-black dark:border-[#383F50] gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#8B5CF6] dark:bg-[#A855F7] border-2 border-black dark:border-white rounded flex items-center justify-center shadow-[2px_2px_0px_#000]">
-              <svg
-                className="w-5 h-5 text-white dark:text-[#0B0D11] fill-current"
-                viewBox="0 0 24 24"
-              >
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-              </svg>
+            <div className="w-10 h-10 bg-[#0E1017] dark:bg-[#1A142A] text-white border-2 border-black dark:border-[#C084FC] rounded-xl flex items-center justify-center shadow-[3px_3px_0px_#000] dark:shadow-[3px_3px_0px_#000000]">
+              <WklyIcon className="w-6 h-6 text-white dark:text-[#F3F4F6]" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-extrabold tracking-tight text-slate-900 dark:text-[#F3F4F6]">
-                Wkly
-              </h1>
+              <div className="flex items-center gap-1.5 font-display">
+                <h1 className="text-xl font-black tracking-[0.16em] uppercase text-slate-900 dark:text-[#F3F4F6]">
+                  Wkly
+                </h1>
+                <span className="w-2 h-2 rounded-full bg-[#8B5CF6] dark:bg-[#A855F7] animate-pulse" />
+              </div>
               <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-[#9CA3AF] font-display">
-                Weekly Activity & Performance Planner
+                Dual-Life Activity & Performance Planner
               </p>
             </div>
           </div>
@@ -133,24 +132,24 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
             <div className="space-y-3 font-display">
               <div className="flex items-center gap-3 p-3 bg-[#FCF9F8] dark:bg-[#1E232E] border-2 border-black dark:border-[#383F50] rounded-lg shadow-[2px_2px_0px_#000]">
-                <div className="w-8 h-8 rounded bg-[#FFE4E6] dark:bg-[#2A161D] border-2 border-black dark:border-[#FB7185] flex items-center justify-center text-sm font-black">
-                  🏋️
+                <div className="w-8 h-8 rounded bg-[#FFE4E6] dark:bg-[#2A161D] border-2 border-black dark:border-[#FB7185] flex items-center justify-center text-slate-900 dark:text-[#FB7185]">
+                  <span className="material-symbols-outlined text-[18px]">fitness_center</span>
                 </div>
                 <div className="text-xs font-bold text-slate-900 dark:text-[#F3F4F6]">
                   Periodized Training & Live RPE Set Tracking
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-[#FCF9F8] dark:bg-[#1E232E] border-2 border-black dark:border-[#383F50] rounded-lg shadow-[2px_2px_0px_#000]">
-                <div className="w-8 h-8 rounded bg-[#BAE6FD] dark:bg-[#132637] border-2 border-black dark:border-[#38BDF8] flex items-center justify-center text-sm font-black">
-                  📖
+                <div className="w-8 h-8 rounded bg-[#BAE6FD] dark:bg-[#132637] border-2 border-black dark:border-[#38BDF8] flex items-center justify-center text-slate-900 dark:text-[#38BDF8]">
+                  <span className="material-symbols-outlined text-[18px]">menu_book</span>
                 </div>
                 <div className="text-xs font-bold text-slate-900 dark:text-[#F3F4F6]">
                   Academic Study Blocks & Canvas Syllabus Sync
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-[#FCF9F8] dark:bg-[#1E232E] border-2 border-black dark:border-[#383F50] rounded-lg shadow-[2px_2px_0px_#000]">
-                <div className="w-8 h-8 rounded bg-[#A7F3D0] dark:bg-[#122A21] border-2 border-black dark:border-[#34D399] flex items-center justify-center text-sm font-black">
-                  ⚡
+                <div className="w-8 h-8 rounded bg-[#A7F3D0] dark:bg-[#122A21] border-2 border-black dark:border-[#34D399] flex items-center justify-center text-slate-900 dark:text-[#34D399]">
+                  <span className="material-symbols-outlined text-[18px]">bolt</span>
                 </div>
                 <div className="text-xs font-bold text-slate-900 dark:text-[#F3F4F6]">
                   CNS Readiness & Cognitive Load Balancing
@@ -193,7 +192,8 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
             <div>
               <h3 className="text-xl font-display font-black flex items-center gap-1.5 text-slate-900 dark:text-[#F3F4F6]">
-                <span>✨</span> {isRegistering ? 'Join Wkly' : 'Welcome back to Wkly'}
+                <span className="material-symbols-outlined text-[20px] text-[#8455ef] dark:text-[#A855F7]">auto_awesome</span>
+                <span>{isRegistering ? 'Join Wkly' : 'Welcome back to Wkly'}</span>
               </h3>
               <p className="text-xs text-slate-600 dark:text-[#9CA3AF] mt-1 font-medium">
                 {isRegistering
@@ -235,7 +235,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
                   onClick={() => performLogin('rosa.athlete@stanford.edu', 'password123')}
                   className="w-full py-3 px-4 bg-[#FEF08A] hover:bg-yellow-200 dark:bg-[#292312] dark:hover:bg-[#383019] text-slate-900 dark:text-[#FBBF24] border-2 border-black dark:border-[#FBBF24] rounded-lg shadow-[3px_3px_0px_#000] neo-btn flex items-center justify-center gap-2 font-display font-black text-xs cursor-pointer"
                 >
-                  <span>⚡</span>
+                  <span className="material-symbols-outlined text-[17px] text-slate-900 dark:text-[#FBBF24]">bolt</span>
                   <span>
                     {loading
                       ? 'Entering Planner...'
@@ -320,7 +320,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
                       ? 'Create Account'
                       : 'Enter Planner'}
                 </span>
-                <span className="text-base font-bold">→</span>
+                <span className="material-symbols-outlined text-[18px] leading-none">arrow_forward</span>
               </button>
             </form>
           </div>

@@ -64,6 +64,7 @@ const fixedDataSchema = new mongoose.Schema(
   {
     taskName: { type: String, required: true, trim: true, maxlength: 200 },
     day: { type: String, required: true, trim: true, maxlength: 32 },
+    date: { type: String, trim: true, maxlength: 64 },
     startingTime: { type: String, required: true, trim: true, maxlength: 16 },
     durationMinutes: { type: Number, required: true, min: 1, max: 1440 },
     color: { type: String, enum: ALLOWED_COLORS, default: 'Mint' },

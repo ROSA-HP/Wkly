@@ -237,7 +237,7 @@ router.post(
       }
 
       clearFailedLoginAttempts(req);
-      const token = signAuthToken(userId, '12h');
+      const token = signAuthToken(userId, '30d');
       const tokenUsage = await getUserTokenQuota(userId);
       attachTokenQuotaHeaders(res, tokenUsage);
 
@@ -252,6 +252,37 @@ router.post(
     }
   }
 );
+
+/**
+ * POST /api/users/demo-session
+ * Automatically provisions an active session for Rosa without manual login prompts.
+ */
+router.post('/demo-session', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const demoEmail = 'rosa.athlete@stanford.edu';
+    await initDemoUser();
+    let userId = 'demo-athlete-1';
+
+    if (mongoose.connection.readyState === 1) {
+      const user = await User.findOne({ email: demoEmail }).select('-password').lean();
+      if (user) {
+        userId = user._id.toString();
+      }
+    }
+
+    const token = signAuthToken(userId, '30d');
+    const tokenUsage = await getUserTokenQuota(userId);
+    attachTokenQuotaHeaders(res, tokenUsage);
+
+    res.json({
+      token,
+      message: 'Demo session active',
+      tokenUsage,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * GET /api/users/me

@@ -152,14 +152,17 @@ export function ClockTimePicker({
           >
             <span className="flex items-center gap-2">
               <span className="w-5 h-5 rounded bg-[#8B5CF6] dark:bg-[#A855F7] text-white dark:text-[#0B0D11] border border-black flex items-center justify-center text-[11px]">
-                🕒
+                <span className="material-symbols-outlined text-[13px] leading-none">schedule</span>
               </span>
               <span className="tracking-wide font-mono text-sm font-black">
                 {formatTime(hour, minute, period)}
               </span>
             </span>
-            <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-yellow-300 dark:bg-[#2E1850] text-black dark:text-[#A855F7] border border-black dark:border-[#A855F7]">
-              {isOpen ? 'CLOSE ▲' : 'SET TIME ▼'}
+            <span className="flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded bg-yellow-300 dark:bg-[#2E1850] text-black dark:text-[#A855F7] border border-black dark:border-[#A855F7]">
+              <span>{isOpen ? 'CLOSE' : 'SET TIME'}</span>
+              <span className="material-symbols-outlined text-[14px] leading-none">
+                {isOpen ? 'expand_less' : 'expand_more'}
+              </span>
             </span>
           </button>
         </div>
@@ -170,7 +173,9 @@ export function ClockTimePicker({
             Session Duration (Mins)
           </label>
           <div className="w-full px-3 py-2 bg-[#FCF9F8] dark:bg-[#10141C] text-slate-900 dark:text-[#F1F5F9] border-2 border-black dark:border-[#383F50] focus-within:border-[#8B5CF6] dark:focus-within:border-[#A855F7] rounded-lg neo-box-sm flex items-center justify-between gap-2 transition-all">
-            <span className="text-xs select-none">⏱️</span>
+            <span className="material-symbols-outlined text-[16px] text-slate-600 dark:text-[#9CA3AF] select-none leading-none">
+              timer
+            </span>
             <input
               type="text"
               inputMode="numeric"
@@ -220,10 +225,10 @@ export function ClockTimePicker({
                 <button
                   type="button"
                   onClick={() => stepHour(1)}
-                  className="w-full py-0.5 text-[10px] font-black hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300"
+                  className="w-full py-0.5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300 cursor-pointer"
                   title="Increase hour"
                 >
-                  ▲
+                  <span className="material-symbols-outlined text-[14px] leading-none">keyboard_arrow_up</span>
                 </button>
                 <button
                   type="button"
@@ -239,10 +244,10 @@ export function ClockTimePicker({
                 <button
                   type="button"
                   onClick={() => stepHour(-1)}
-                  className="w-full py-0.5 text-[10px] font-black hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300"
+                  className="w-full py-0.5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300 cursor-pointer"
                   title="Decrease hour"
                 >
-                  ▼
+                  <span className="material-symbols-outlined text-[14px] leading-none">keyboard_arrow_down</span>
                 </button>
               </div>
 
@@ -253,10 +258,10 @@ export function ClockTimePicker({
                 <button
                   type="button"
                   onClick={() => stepMinute(5)}
-                  className="w-full py-0.5 text-[10px] font-black hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300"
+                  className="w-full py-0.5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300 cursor-pointer"
                   title="Increase minutes"
                 >
-                  ▲
+                  <span className="material-symbols-outlined text-[14px] leading-none">keyboard_arrow_up</span>
                 </button>
                 <button
                   type="button"
@@ -272,10 +277,10 @@ export function ClockTimePicker({
                 <button
                   type="button"
                   onClick={() => stepMinute(-5)}
-                  className="w-full py-0.5 text-[10px] font-black hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300"
+                  className="w-full py-0.5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-[#161922] rounded text-slate-600 dark:text-slate-300 cursor-pointer"
                   title="Decrease minutes"
                 >
-                  ▼
+                  <span className="material-symbols-outlined text-[14px] leading-none">keyboard_arrow_down</span>
                 </button>
               </div>
 
@@ -335,9 +340,10 @@ export function ClockTimePicker({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-1 bg-[#34D399] text-[#062E1E] border-2 border-black rounded-lg text-xs font-black shadow-[2px_2px_0px_#000] neo-btn"
+                className="px-3 py-1 bg-[#34D399] text-[#062E1E] border-2 border-black rounded-lg text-xs font-black shadow-[2px_2px_0px_#000] neo-btn flex items-center gap-1 cursor-pointer"
               >
-                ✓ Lock Time
+                <span className="material-symbols-outlined text-[14px] leading-none">check</span>
+                <span>Lock Time</span>
               </button>
             </div>
           </div>
@@ -400,29 +406,32 @@ export function ClockTimePicker({
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { label: '🌅 07:00 AM', h: 7, m: 0, p: 'AM' as const },
-                  { label: '🏋️ 08:30 AM', h: 8, m: 30, p: 'AM' as const },
-                  { label: '📖 10:00 AM', h: 10, m: 0, p: 'AM' as const },
-                  { label: '☀️ 12:00 PM', h: 12, m: 0, p: 'PM' as const },
-                  { label: '🔬 02:00 PM', h: 2, m: 0, p: 'PM' as const },
-                  { label: '⚡ 04:30 PM', h: 4, m: 30, p: 'PM' as const },
-                  { label: '🥗 06:00 PM', h: 6, m: 0, p: 'PM' as const },
-                  { label: '🌙 08:00 PM', h: 8, m: 0, p: 'PM' as const },
+                  { icon: 'wb_twilight', text: '07:00 AM', h: 7, m: 0, p: 'AM' as const },
+                  { icon: 'fitness_center', text: '08:30 AM', h: 8, m: 30, p: 'AM' as const },
+                  { icon: 'menu_book', text: '10:00 AM', h: 10, m: 0, p: 'AM' as const },
+                  { icon: 'light_mode', text: '12:00 PM', h: 12, m: 0, p: 'PM' as const },
+                  { icon: 'biotech', text: '02:00 PM', h: 2, m: 0, p: 'PM' as const },
+                  { icon: 'bolt', text: '04:30 PM', h: 4, m: 30, p: 'PM' as const },
+                  { icon: 'restaurant', text: '06:00 PM', h: 6, m: 0, p: 'PM' as const },
+                  { icon: 'dark_mode', text: '08:00 PM', h: 8, m: 0, p: 'PM' as const },
                 ].map((slot) => {
                   const active =
                     hour === slot.h && minute === slot.m && period === slot.p;
                   return (
                     <button
-                      key={slot.label}
+                      key={slot.text}
                       type="button"
                       onClick={() => applyPreset(slot.h, slot.m, slot.p)}
-                      className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg border-2 text-left transition-all ${
+                      className={`px-2 py-1.5 text-[11px] font-bold rounded-lg border-2 text-left transition-all flex items-center gap-1.5 cursor-pointer ${
                         active
                           ? 'bg-yellow-300 dark:bg-[#2E1850] text-black dark:text-[#A855F7] border-black dark:border-[#A855F7] shadow-[2px_2px_0px_#000]'
                           : 'bg-[#FCF9F8] dark:bg-[#10141C] text-slate-800 dark:text-[#F3F4F6] border-black dark:border-[#383F50] hover:bg-slate-100 dark:hover:bg-[#161922]'
                       }`}
                     >
-                      {slot.label}
+                      <span className="material-symbols-outlined text-[14px] leading-none shrink-0">
+                        {slot.icon}
+                      </span>
+                      <span>{slot.text}</span>
                     </button>
                   );
                 })}

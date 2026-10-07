@@ -36,9 +36,10 @@ export function ModalContainer({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded border-2 border-black dark:border-[#383F50] bg-white dark:bg-[#10141C] text-slate-900 dark:text-[#F3F4F6] hover:bg-red-100 dark:hover:bg-[#2A161D] dark:hover:text-[#FB7185] flex items-center justify-center font-black text-sm neo-box-sm transition-colors cursor-pointer"
+            aria-label="Close modal"
+            className="w-8 h-8 rounded border-2 border-black dark:border-[#383F50] bg-white dark:bg-[#10141C] text-slate-900 dark:text-[#F3F4F6] hover:bg-red-100 dark:hover:bg-[#2A161D] dark:hover:text-[#FB7185] flex items-center justify-center neo-box-sm transition-colors cursor-pointer"
           >
-            ✕
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
 

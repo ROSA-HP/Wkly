@@ -12,6 +12,16 @@ import { initialTasks } from '../data.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { sanitizeStringValue } from '../middleware/securityMiddleware.js';
 import {
+  getTodayInfo,
+  getWeekDays,
+  getYmdForDayOfWeek,
+  getDayNameFromDateStr,
+  formatYmd,
+  parseYmdToLocalDate,
+  WEEK_DAYS_ORDER,
+  DayInfo,
+} from '../utils/dateUtils.js';
+import {
   enforceUserTokenQuota,
   estimateTokens,
   recordUserTokenConsumption,
@@ -149,11 +159,9 @@ function formatIsoTime(isoDate?: string): string {
 }
 
 function getDayFromIsoOrYmd(dateStr?: string): string {
-  if (!dateStr) return 'Tuesday';
+  if (!dateStr) return getTodayInfo().dayName;
   if (DAYS_OF_WEEK.includes(dateStr)) return dateStr;
-  const parsed = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00.000Z`);
-  if (isNaN(parsed.getTime())) return 'Tuesday';
-  return DAYS_OF_WEEK[parsed.getUTCDay()] || 'Tuesday';
+  return getDayNameFromDateStr(dateStr);
 }
 
 function sanitizeCanvasFields(rawFields: unknown): Array<{
@@ -209,11 +217,12 @@ function sanitizeCanvasFields(rawFields: unknown): Array<{
 
 function sanitizeFixedData(rawFixed: any, fallbackTitle: string) {
   if (!rawFixed || typeof rawFixed !== 'object') return undefined;
+  const todayInfo = getTodayInfo();
   const taskName = sanitizeStringValue(String(rawFixed.taskName || fallbackTitle || 'Untitled Task'))
     .trim()
     .slice(0, 200);
-  const rawDay = String(rawFixed.day || '2026-09-30').trim();
-  const day = /^\d{4}-\d{2}-\d{2}$/.test(rawDay) ? rawDay : '2026-09-30';
+  const rawDay = String(rawFixed.day || todayInfo.dateStr).trim();
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(rawDay) ? rawDay : todayInfo.dateStr;
   const rawTime = String(rawFixed.startingTime || '14:00').trim();
   const startingTime = /^\d{2}:\d{2}$/.test(rawTime) ? rawTime : '14:00';
   const dur = Number(rawFixed.durationMinutes);
@@ -280,22 +289,39 @@ export function normalizeTaskBody(body: Record<string, any>) {
   const colorName =
     candidateColor && ALLOWED_COLORS.includes(candidateColor) ? candidateColor : undefined;
 
-  const isoDate = sanitizeStringValue(
-    String(
-      body?.date ||
-        body?.details?.isoDate ||
-        (fixedData?.day && fixedData?.startingTime
-          ? `${fixedData.day}T${fixedData.startingTime}:00.000Z`
-          : new Date('2026-09-28T09:00:00.000Z').toISOString())
-    )
-  ).slice(0, 64);
+  const todayInfo = getTodayInfo();
 
-  const day =
-    body?.day && DAYS_OF_WEEK.includes(body.day)
-      ? body.day
-      : fixedData?.day
-      ? getDayFromIsoOrYmd(fixedData.day)
-      : getDayFromIsoOrYmd(isoDate);
+  let candidateDate = body?.date || body?.details?.isoDate;
+  let resolvedDay: string;
+
+  if (candidateDate && typeof candidateDate === 'string' && candidateDate.trim()) {
+    // The provided date is the ultimate source of truth
+    const trimmed = candidateDate.trim();
+    resolvedDay = getDayNameFromDateStr(trimmed);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const startingTime = fixedData?.startingTime || '09:00';
+      candidateDate = `${trimmed}T${startingTime}:00.000Z`;
+    } else {
+      candidateDate = trimmed;
+    }
+  } else if (fixedData?.day && /^\d{4}-\d{2}-\d{2}$/.test(String(fixedData.day).trim())) {
+    const cleanYmd = String(fixedData.day).trim();
+    resolvedDay = getDayNameFromDateStr(cleanYmd);
+    const startingTime = fixedData.startingTime || '09:00';
+    candidateDate = `${cleanYmd}T${startingTime}:00.000Z`;
+  } else {
+    // Only fall back to day name if no date was provided
+    resolvedDay =
+      body?.day && DAYS_OF_WEEK.includes(body.day)
+        ? body.day
+        : todayInfo.dayName;
+    const ymd = getYmdForDayOfWeek(resolvedDay as any);
+    const startingTime = fixedData?.startingTime || '09:00';
+    candidateDate = `${ymd}T${startingTime}:00.000Z`;
+  }
+
+  const isoDate = sanitizeStringValue(String(candidateDate)).slice(0, 64);
+  const day = resolvedDay;
 
   const time =
     typeof body?.time === 'string' && body.time.trim()
@@ -427,7 +453,7 @@ function deterministicFallbackParse(promptText: string) {
       {
         fixedData: {
           taskName: 'Karate Conditioning',
-          day: '2026-09-30',
+          day: getYmdForDayOfWeek('Wednesday'),
           startingTime: '07:00',
           durationMinutes: 45,
           color: 'Pink',
@@ -470,18 +496,23 @@ function deterministicFallbackParse(promptText: string) {
     }
   }
 
+  const todayInfo = getTodayInfo();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowYmd = formatYmd(tomorrow);
+
   const dayMap: Record<string, string> = {
-    monday: '2026-09-28',
-    today: '2026-09-29',
-    tuesday: '2026-09-29',
-    tomorrow: '2026-09-30',
-    wednesday: '2026-09-30',
-    thursday: '2026-10-01',
-    friday: '2026-10-02',
-    saturday: '2026-10-03',
-    sunday: '2026-10-04',
+    today: todayInfo.dateStr,
+    tomorrow: tomorrowYmd,
+    monday: getYmdForDayOfWeek('Monday'),
+    tuesday: getYmdForDayOfWeek('Tuesday'),
+    wednesday: getYmdForDayOfWeek('Wednesday'),
+    thursday: getYmdForDayOfWeek('Thursday'),
+    friday: getYmdForDayOfWeek('Friday'),
+    saturday: getYmdForDayOfWeek('Saturday'),
+    sunday: getYmdForDayOfWeek('Sunday'),
   };
-  let dayStr = '2026-09-30';
+  let dayStr = todayInfo.dateStr;
   for (const [k, dVal] of Object.entries(dayMap)) {
     if (lower.includes(k)) {
       dayStr = dVal;
@@ -745,6 +776,17 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   if (mongoose.connection.readyState === 1) {
     try {
       let tasks = await Task.find({ userId });
+      for (const t of tasks) {
+        if (t.day && t.date) {
+          const derivedDay = getDayNameFromDateStr(t.date);
+          if (derivedDay !== t.day) {
+            const correctYmd = getYmdForDayOfWeek(t.day as any);
+            const timePart = t.date.includes('T') ? t.date.split('T')[1] : '09:00:00.000Z';
+            t.date = `${correctYmd}T${timePart}`;
+            await Task.updateOne({ _id: t._id }, { $set: { date: t.date } });
+          }
+        }
+      }
       if (tasks.length === 0 && initialTasks.length > 0 && userId === 'demo-athlete-1') {
         const seedData = initialTasks.map((t) => {
           const { id: _id, ...rest } = t;

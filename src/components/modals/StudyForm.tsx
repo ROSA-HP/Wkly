@@ -1,17 +1,37 @@
 import { useState, FormEvent } from 'react';
 import { Task, DayOfWeek, GoalItem } from '../../types';
 import { ClockTimePicker } from './ClockTimePicker';
+import {
+  getTodayInfo,
+  getYmdForDayOfWeek,
+  getYmdForDayInSameWeek,
+  getDayNameFromDateStr,
+  WEEK_DAYS_ORDER,
+} from '../../utils/dateUtils';
 
 interface StudyFormProps {
   initialTask?: Task | null;
   defaultDay?: DayOfWeek;
+  defaultDate?: string;
   onSave: (task: Omit<Task, 'id'>) => void;
   onClose: () => void;
 }
 
-export function StudyForm({ initialTask, defaultDay, onSave, onClose }: StudyFormProps) {
+export function StudyForm({ initialTask, defaultDay, defaultDate, onSave, onClose }: StudyFormProps) {
+  const autonomousToday = getTodayInfo();
+  const initialDay: DayOfWeek =
+    initialTask?.day ||
+    (initialTask?.date
+      ? getDayNameFromDateStr(initialTask.date)
+      : defaultDay || (defaultDate ? getDayNameFromDateStr(defaultDate) : autonomousToday.dayName));
+  const initialDate: string =
+    initialTask?.date
+      ? initialTask.date.slice(0, 10)
+      : defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : autonomousToday.dateStr);
+
   const [subject, setSubject] = useState(initialTask?.title || '');
-  const [day, setDay] = useState<DayOfWeek>(initialTask?.day || defaultDay || 'Monday');
+  const [day, setDay] = useState<DayOfWeek>(initialDay);
+  const [date, setDate] = useState<string>(initialDate);
   const [time, setTime] = useState(initialTask?.time || '10:00 AM');
   const [duration, setDuration] = useState(initialTask?.duration || '90 min');
   const [studyType, setStudyType] = useState(
@@ -31,11 +51,12 @@ export function StudyForm({ initialTask, defaultDay, onSave, onClose }: StudyFor
       title: subject.trim() || 'Study Session',
       category: 'STUDYING',
       day,
+      date,
       time,
       duration,
       colorTint,
       subtitle: `${studyType} • ${duration}`,
-      details: { studyType, goals, notes },
+      details: { studyType, goals, notes, date, isoDate: `${date}T10:00:00.000Z` },
     });
   };
 
@@ -76,23 +97,44 @@ export function StudyForm({ initialTask, defaultDay, onSave, onClose }: StudyFor
         </div>
       </div>
 
-      <div>
-        <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-[#F3F4F6] mb-1">
-          Target Day
-        </label>
-        <select
-          value={day}
-          onChange={(e) => setDay(e.target.value as DayOfWeek)}
-          className="w-full text-xs font-bold px-3 py-2.5 rounded-lg neo-input cursor-pointer"
-        >
-          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
-            (d) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-[#F3F4F6] mb-1">
+            Target Day
+          </label>
+          <select
+            value={day}
+            onChange={(e) => {
+              const newDay = e.target.value as DayOfWeek;
+              setDay(newDay);
+              setDate(getYmdForDayInSameWeek(newDay, date));
+            }}
+            className="w-full text-xs font-bold px-3 py-2.5 rounded-lg neo-input cursor-pointer"
+          >
+            {WEEK_DAYS_ORDER.map((d) => (
               <option key={d} value={d} className="bg-white dark:bg-[#161922] text-slate-900 dark:text-[#F3F4F6]">
                 {d}
               </option>
-            )
-          )}
-        </select>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-[#F3F4F6] mb-1">
+            Target Date
+          </label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => {
+              const val = e.target.value;
+              setDate(val);
+              if (val) {
+                setDay(getDayNameFromDateStr(val));
+              }
+            }}
+            className="w-full text-xs font-bold px-3 py-2.5 rounded-lg neo-input cursor-pointer"
+          />
+        </div>
       </div>
 
       {/* Clock-Based Start Time & Duration Selector */}
@@ -175,7 +217,7 @@ export function StudyForm({ initialTask, defaultDay, onSave, onClose }: StudyFor
                   title="Remove goal"
                   className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer"
                 >
-                  ×
+                  <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                 </button>
               </div>
             ))}
@@ -187,7 +229,8 @@ export function StudyForm({ initialTask, defaultDay, onSave, onClose }: StudyFor
           onClick={handleAddGoal}
           className="w-full mt-2 py-2 bg-[#F6F3F2] dark:bg-[#1E232E] hover:bg-white dark:hover:bg-[#132637] border-2 border-dashed border-black dark:border-[#383F50] rounded-lg text-xs font-black text-slate-700 dark:text-[#F3F4F6] hover:text-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>+ Add Goal</span>
+          <span className="material-symbols-outlined text-[15px] leading-none">add</span>
+          <span>Add Goal</span>
         </button>
       </div>
 
@@ -245,7 +288,7 @@ export function StudyForm({ initialTask, defaultDay, onSave, onClose }: StudyFor
           className="px-5 py-2 bg-[#8B5CF6] dark:bg-[#A855F7] hover:bg-[#7c3aed] dark:hover:bg-[#C084FC] text-white dark:text-[#0B0D11] border-2 border-black dark:border-white rounded-lg font-black text-xs shadow-[4px_4px_0px_#000] neo-btn flex items-center gap-1.5 cursor-pointer"
         >
           <span>{initialTask ? 'Update Study Session' : 'Save Study Session'}</span>
-          <span>✓</span>
+          <span className="material-symbols-outlined text-[16px] leading-none">check</span>
         </button>
       </div>
     </form>

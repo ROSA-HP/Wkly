@@ -27,12 +27,12 @@ export const STUDY_BLOCK_TYPES = [
 ];
 
 export const OTHER_CATEGORY_TAGS = [
-  { name: 'Life Admin', icon: '🗂️' },
-  { name: 'Nutrition & Meal Prep', icon: '🥗' },
-  { name: 'Team Logistics & Travel', icon: '🚌' },
-  { name: 'Recovery & Physio', icon: '💆' },
-  { name: 'Personal Errands', icon: '🛒' },
-  { name: 'Mindset & Meditation', icon: '🧠' },
+  { name: 'Life Admin', icon: 'folder' },
+  { name: 'Nutrition & Meal Prep', icon: 'restaurant' },
+  { name: 'Team Logistics & Travel', icon: 'directions_bus' },
+  { name: 'Recovery & Physio', icon: 'spa' },
+  { name: 'Personal Errands', icon: 'shopping_cart' },
+  { name: 'Mindset & Meditation', icon: 'psychology' },
 ];
 
 export interface FlexibleItem {
@@ -66,24 +66,24 @@ export interface FlexibleItem {
 const NUMERIC_KEYS = new Set(['Duration (mins)', 'Sets', 'Reps', 'Intensity (1-10)']);
 
 const FIELD_SELECTOR_OPTIONS = [
-  { label: '🏋️ Training Drill (Exercise · Sets · Reps · Wt)', value: '__WIDGET_TRAINING__' },
-  { label: '✅ Checklist / Focus Goal Item', value: '__WIDGET_GOAL__' },
-  { label: '📖 Study Block Type (Pills)', value: '__WIDGET_STUDY_TYPE__' },
-  { label: '🏷️ Category Tag (Icon Grid)', value: '__WIDGET_CATEGORY_TAG__' },
-  { label: '⚡ Intensity / RPE (1-10)', value: 'Intensity (1-10)' },
-  { label: '📚 Subject / Course', value: 'Subject' },
-  { label: '🃏 Deck / Resource', value: 'Deck/Resource' },
-  { label: '💻 Project', value: 'Project' },
-  { label: '🛠️ Tech Stack', value: 'Tech Stack' },
-  { label: '🔌 Hardware Used', value: 'Hardware Used' },
-  { label: '🏛️ Committee', value: 'Committee' },
-  { label: '📅 Deadline', value: 'Deadline' },
-  { label: '⏱️ Duration (mins)', value: 'Duration (mins)' },
-  { label: '📝 Notes', value: 'Notes' },
-  { label: '⚖️ Weight (Single Field)', value: 'Weight' },
-  { label: '🔢 Sets (Single Field)', value: 'Sets' },
-  { label: '🔁 Reps (Single Field)', value: 'Reps' },
-  { label: '✏️ Custom Field Key...', value: '__CUSTOM__' },
+  { label: 'Training Drill (Exercise · Sets · Reps · Wt)', value: '__WIDGET_TRAINING__' },
+  { label: 'Checklist / Focus Goal Item', value: '__WIDGET_GOAL__' },
+  { label: 'Study Block Type (Pills)', value: '__WIDGET_STUDY_TYPE__' },
+  { label: 'Category Tag (Icon Grid)', value: '__WIDGET_CATEGORY_TAG__' },
+  { label: 'Intensity / RPE (1-10)', value: 'Intensity (1-10)' },
+  { label: 'Subject / Course', value: 'Subject' },
+  { label: 'Deck / Resource', value: 'Deck/Resource' },
+  { label: 'Project', value: 'Project' },
+  { label: 'Tech Stack', value: 'Tech Stack' },
+  { label: 'Hardware Used', value: 'Hardware Used' },
+  { label: 'Committee', value: 'Committee' },
+  { label: 'Deadline', value: 'Deadline' },
+  { label: 'Duration (mins)', value: 'Duration (mins)' },
+  { label: 'Notes', value: 'Notes' },
+  { label: 'Weight (Single Field)', value: 'Weight' },
+  { label: 'Sets (Single Field)', value: 'Sets' },
+  { label: 'Reps (Single Field)', value: 'Reps' },
+  { label: 'Custom Field Key...', value: '__CUSTOM__' },
 ];
 
 export function createTrainingDrillItem(
@@ -526,7 +526,7 @@ export function FlexibleFieldsSection({
                       title="Remove drill"
                       className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer flex-shrink-0"
                     >
-                      ×
+                      <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                     </button>
                   </div>
 
@@ -624,7 +624,7 @@ export function FlexibleFieldsSection({
                     title="Remove goal"
                     className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer flex-shrink-0"
                   >
-                    ×
+                    <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                   </button>
                 </div>
               );
@@ -638,8 +638,9 @@ export function FlexibleFieldsSection({
                   className="p-3 bg-white dark:bg-[#1E232E] border-2 border-black dark:border-[#383F50] rounded-lg neo-box-sm space-y-2"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-[#38BDF8]">
-                      📖 Study Block Type
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-[#38BDF8] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px] leading-none">menu_book</span>
+                      <span>Study Block Type</span>
                     </span>
                     <div className="flex items-center gap-1.5">
                       <select
@@ -658,7 +659,7 @@ export function FlexibleFieldsSection({
                         onClick={() => handleRemove(idx)}
                         className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer"
                       >
-                        ×
+                        <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                       </button>
                     </div>
                   </div>
@@ -690,8 +691,9 @@ export function FlexibleFieldsSection({
                   className="p-3 bg-white dark:bg-[#1E232E] border-2 border-black dark:border-[#383F50] rounded-lg neo-box-sm space-y-2"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-[#FBBF24]">
-                      🏷️ Category Tag
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-[#FBBF24] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px] leading-none">label</span>
+                      <span>Category Tag</span>
                     </span>
                     <div className="flex items-center gap-1.5">
                       <select
@@ -710,7 +712,7 @@ export function FlexibleFieldsSection({
                         onClick={() => handleRemove(idx)}
                         className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer"
                       >
-                        ×
+                        <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                       </button>
                     </div>
                   </div>
@@ -726,7 +728,7 @@ export function FlexibleFieldsSection({
                             : 'bg-[#FCF9F8] dark:bg-[#10141C] text-slate-800 dark:text-[#F3F4F6] border-black dark:border-[#383F50] font-bold'
                         }`}
                       >
-                        <span>{t.icon}</span>
+                        <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
                         <span className="truncate">{t.name}</span>
                       </button>
                     ))}
@@ -744,8 +746,9 @@ export function FlexibleFieldsSection({
                   className="p-3 bg-white dark:bg-[#1E232E] border-2 border-black dark:border-[#383F50] rounded-lg neo-box-sm space-y-2"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-[#FB7185]">
-                      ⚡ Intensity / RPE (1–10): <span className="font-mono">{currentInt}/10</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-[#FB7185] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px] leading-none">bolt</span>
+                      <span>Intensity / RPE (1–10): <span className="font-mono">{currentInt}/10</span></span>
                     </span>
                     <div className="flex items-center gap-1.5">
                       <select
@@ -764,7 +767,7 @@ export function FlexibleFieldsSection({
                         onClick={() => handleRemove(idx)}
                         className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer"
                       >
-                        ×
+                        <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                       </button>
                     </div>
                   </div>
@@ -808,9 +811,9 @@ export function FlexibleFieldsSection({
                       type="button"
                       title="Switch to preset field or widget"
                       onClick={() => handleSwitchType(idx, 'Project')}
-                      className="px-2 py-1.5 bg-[#FCF9F8] dark:bg-[#10141C] border-2 border-black dark:border-[#383F50] rounded text-[10px] font-black cursor-pointer"
+                      className="px-2 py-1.5 bg-[#FCF9F8] dark:bg-[#10141C] border-2 border-black dark:border-[#383F50] rounded text-[10px] font-black cursor-pointer flex items-center justify-center"
                     >
-                      ▾
+                      <span className="material-symbols-outlined text-[14px] leading-none">arrow_drop_down</span>
                     </button>
                   </div>
                 ) : (
@@ -892,7 +895,7 @@ export function FlexibleFieldsSection({
                     title="Remove field"
                     className="w-6 h-6 rounded bg-red-100 dark:bg-[#2A161D] hover:bg-red-200 border border-black dark:border-[#FB7185] flex items-center justify-center text-xs font-bold text-red-700 dark:text-[#FB7185] cursor-pointer flex-shrink-0"
                   >
-                    ×
+                    <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                   </button>
                 </div>
               </div>
@@ -908,7 +911,7 @@ export function FlexibleFieldsSection({
           onClick={handleAddDrill}
           className="py-2 px-3 bg-[#F6F3F2] dark:bg-[#1E232E] hover:bg-[#FFE4E6] dark:hover:bg-[#2A161D] border-2 border-dashed border-black dark:border-[#FB7185] rounded-lg text-xs font-black text-slate-800 dark:text-[#F3F4F6] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>+</span>
+          <span className="material-symbols-outlined text-[15px] leading-none">add</span>
           <span>Add Exercise Drill</span>
         </button>
 
@@ -917,7 +920,7 @@ export function FlexibleFieldsSection({
           onClick={handleAddGoal}
           className="py-2 px-3 bg-[#F6F3F2] dark:bg-[#1E232E] hover:bg-[#BAE6FD] dark:hover:bg-[#132637] border-2 border-dashed border-black dark:border-[#38BDF8] rounded-lg text-xs font-black text-slate-800 dark:text-[#F3F4F6] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>+</span>
+          <span className="material-symbols-outlined text-[15px] leading-none">add</span>
           <span>Add Checklist Goal</span>
         </button>
 
@@ -926,7 +929,7 @@ export function FlexibleFieldsSection({
           onClick={() => handleAddKeyValue('Project', false)}
           className="py-2 px-3 bg-[#F6F3F2] dark:bg-[#1E232E] hover:bg-[#FEF08A] dark:hover:bg-[#292312] border-2 border-dashed border-black dark:border-[#FBBF24] rounded-lg text-xs font-black text-slate-800 dark:text-[#F3F4F6] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>+</span>
+          <span className="material-symbols-outlined text-[15px] leading-none">add</span>
           <span>Add Flexible Field</span>
         </button>
       </div>

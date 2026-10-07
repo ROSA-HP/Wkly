@@ -1,4 +1,7 @@
 import { Task, DayOfWeek } from '../../types';
+import { DayInfo } from '../../utils/dateUtils';
+
+export type { DayInfo };
 
 interface TaskCardProps {
   key?: string;
@@ -227,10 +230,10 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
 interface DayColumnProps {
   key?: string;
-  day: { name: DayOfWeek; date: number; isToday?: boolean };
+  day: DayInfo;
   tasks: Task[];
   onTaskClick: (task: Task) => void;
-  onAddTask: (day: DayOfWeek) => void;
+  onAddTask: (day: DayOfWeek, dateStr: string) => void;
 }
 
 function getStartMinutes(task: Task): number {
@@ -311,14 +314,15 @@ export function DayColumn({ day, tasks, onTaskClick, onAddTask }: DayColumnProps
           ))}
 
           <button
-            onClick={() => onAddTask(day.name)}
-            className={`w-full py-2 border-2 border-dashed rounded-lg text-[10px] font-display font-extrabold transition-all cursor-pointer ${
+            onClick={() => onAddTask(day.name, day.dateStr)}
+            className={`w-full py-2 border-2 border-dashed rounded-lg text-[10px] font-display font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1 ${
               day.isToday
                 ? 'border-[#8B5CF6] dark:border-[#A855F7] bg-white/75 dark:bg-[#1A1E2F]/80 backdrop-blur-xs text-[#8B5CF6] dark:text-[#C084FC] hover:bg-[#8B5CF6]/10 dark:hover:bg-[#A855F7]/20 shadow-xs'
                 : 'border-black dark:border-[#383F50] text-slate-500 dark:text-[#9CA3AF] hover:text-black dark:hover:text-[#F3F4F6] hover:bg-slate-50 dark:hover:bg-[#1E232E]'
             }`}
           >
-            + ADD TASK
+            <span className="material-symbols-outlined text-[14px] leading-none">add</span>
+            <span>ADD TASK</span>
           </button>
         </div>
       </div>

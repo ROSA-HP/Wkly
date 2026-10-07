@@ -1,4 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import {
+  getTodayInfo,
+  getWeekDays,
+  getWeekDaysForDate,
+  getYmdForDayOfWeek,
+  getDayNameFromDateStr,
+  formatDayShortLabel,
+  WEEK_DAYS_ORDER,
+} from '../../utils/dateUtils';
 
 export const PALETTE_COLORS = [
   'Pink',
@@ -24,36 +33,6 @@ export const COLOR_HEX_MAP = {
   'Soft Gray': { pastel: '#e2e8f0', accent: '#64748b', text: '#121212', tintClass: 'bg-[#E2E8F0]' },
   Lilac: { pastel: '#e9ddff', accent: '#8455ef', text: '#121212', tintClass: 'bg-[#F5D0FE]' },
   Green: { pastel: '#acedff', accent: '#008096', text: '#121212', tintClass: 'bg-[#BBF7D0]' },
-};
-
-const DAY_NAME_TO_YMD = {
-  Monday: '2026-09-28',
-  Tuesday: '2026-09-29',
-  Wednesday: '2026-09-30',
-  Thursday: '2026-10-01',
-  Friday: '2026-10-02',
-  Saturday: '2026-10-03',
-  Sunday: '2026-10-04',
-};
-
-const YMD_TO_DAY_NAME = {
-  '2026-09-28': 'Monday',
-  '2026-09-29': 'Tuesday',
-  '2026-09-30': 'Wednesday',
-  '2026-10-01': 'Thursday',
-  '2026-10-02': 'Friday',
-  '2026-10-03': 'Saturday',
-  '2026-10-04': 'Sunday',
-};
-
-const DAY_SHORT_LABELS = {
-  Monday: 'Mon, Sep 28',
-  Tuesday: 'Tue, Sep 29',
-  Wednesday: 'Wed, Sep 30',
-  Thursday: 'Thu, Oct 01',
-  Friday: 'Fri, Oct 02',
-  Saturday: 'Sat, Oct 03',
-  Sunday: 'Sun, Oct 04',
 };
 
 const AI_EXAMPLE_PROMPTS = [
@@ -232,9 +211,12 @@ export function NewTaskModal({
   isOpen = true,
   onClose,
   onSave,
-  defaultDay = 'Wednesday',
+  defaultDay,
+  defaultDate,
   initialTask = null,
 }) {
+  const autonomousToday = useMemo(() => getTodayInfo(), []);
+
   // Fixed Data state ("taskName", "day" YYYY-MM-DD, "startingTime" HH:MM 24h, "durationMinutes" Number, "color")
   const [taskName, setTaskName] = useState(
     () =>
@@ -243,8 +225,24 @@ export function NewTaskModal({
       initialTask?.title ||
       'ESP32 Sensor Calibration & High-Load Telemetry'
   );
-  const [selectedDayName, setSelectedDayName] = useState(
-    () => initialTask?.day || defaultDay || 'Wednesday'
+  const [selectedDayName, setSelectedDayName] = useState(() => {
+    if (initialTask?.day) return initialTask.day;
+    if (initialTask?.date) return getDayNameFromDateStr(initialTask.date);
+    if (defaultDate) return getDayNameFromDateStr(defaultDate);
+    return defaultDay || autonomousToday.dayName;
+  });
+  const [selectedDateStr, setSelectedDateStr] = useState(() => {
+    if (initialTask?.date) return initialTask.date.slice(0, 10);
+    if (initialTask?.fixedData?.day && /^\d{4}-\d{2}-\d{2}$/.test(initialTask.fixedData.day)) {
+      return initialTask.fixedData.day;
+    }
+    if (defaultDate) return defaultDate;
+    if (defaultDay) return getYmdForDayOfWeek(defaultDay);
+    return autonomousToday.dateStr;
+  });
+  const currentWeekList = useMemo(
+    () => getWeekDaysForDate(selectedDateStr),
+    [selectedDateStr]
   );
   const [startingTime24, setStartingTime24] = useState(() =>
     to24HourTime(initialTask?.fixedData?.startingTime || initialTask?.time || '14:00')
@@ -317,7 +315,17 @@ export function NewTaskModal({
           initialTask.title ||
           'Untitled Task'
       );
-      setSelectedDayName(initialTask.day || defaultDay || 'Wednesday');
+      const derivedDay =
+        initialTask.day ||
+        (initialTask.date
+          ? getDayNameFromDateStr(initialTask.date)
+          : defaultDay || (defaultDate ? getDayNameFromDateStr(defaultDate) : autonomousToday.dayName));
+      setSelectedDayName(derivedDay);
+      setSelectedDateStr(
+        initialTask.date
+          ? initialTask.date.slice(0, 10)
+          : initialTask.fixedData?.day || defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : getYmdForDayOfWeek(derivedDay))
+      );
       setStartingTime24(
         to24HourTime(initialTask.fixedData?.startingTime || initialTask.time || '14:00')
       );
@@ -332,9 +340,15 @@ export function NewTaskModal({
       setSprintTag(initialTask.details?.tag || 'Hardware Sprint • Athletics');
       setCanvasFields(buildDefaultCanvasFields(initialTask));
     } else {
-      setSelectedDayName(defaultDay || 'Wednesday');
+      const derivedDay = defaultDate
+        ? getDayNameFromDateStr(defaultDate)
+        : defaultDay || autonomousToday.dayName;
+      setSelectedDayName(derivedDay);
+      setSelectedDateStr(
+        defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : autonomousToday.dateStr)
+      );
     }
-  }, [initialTask, defaultDay]);
+  }, [initialTask, defaultDay, defaultDate, autonomousToday]);
 
   const activeColorMeta = useMemo(
     () => COLOR_HEX_MAP[selectedColor] || COLOR_HEX_MAP.Mint,
@@ -343,7 +357,7 @@ export function NewTaskModal({
 
   // Compiled Wkly JSON Schema output matching the exact prompt specification
   const compiledWklyJson = useMemo(() => {
-    const ymd = DAY_NAME_TO_YMD[selectedDayName] || '2026-09-30';
+    const ymd = selectedDateStr || getYmdForDayOfWeek(selectedDayName) || autonomousToday.dateStr;
     const durNum = Math.max(1, parseInt(durationDigits, 10) || 60);
 
     const formattedCanvasFields = canvasFields.map((cf) => {
@@ -376,7 +390,7 @@ export function NewTaskModal({
         canvasFields: formattedCanvasFields,
       },
     ];
-  }, [taskName, selectedDayName, startingTime24, durationDigits, selectedColor, canvasFields]);
+  }, [taskName, selectedDateStr, selectedDayName, startingTime24, durationDigits, selectedColor, canvasFields]);
 
   if (!isOpen) return null;
 
@@ -997,8 +1011,9 @@ export function NewTaskModal({
         const first = parsedArray[0];
         if (first.fixedData) {
           if (first.fixedData.taskName) setTaskName(first.fixedData.taskName);
-          if (first.fixedData.day && YMD_TO_DAY_NAME[first.fixedData.day]) {
-            setSelectedDayName(YMD_TO_DAY_NAME[first.fixedData.day]);
+          if (first.fixedData.day) {
+            setSelectedDayName(getDayNameFromDateStr(first.fixedData.day));
+            setSelectedDateStr(first.fixedData.day);
           }
           if (first.fixedData.startingTime) {
             setStartingTime24(to24HourTime(first.fixedData.startingTime));
@@ -1096,7 +1111,7 @@ export function NewTaskModal({
           category: initialTask?.category || 'OTHER',
           color: payload.fixedData.color,
           date: `${payload.fixedData.day}T${payload.fixedData.startingTime}:00.000Z`,
-          day: selectedDayName,
+          day: getDayNameFromDateStr(payload.fixedData.day),
           time: formattedTime12,
           duration: durationStr,
           colorTint: activeColorMeta.tintClass,
@@ -1236,9 +1251,10 @@ export function NewTaskModal({
                   type="button"
                   disabled={isParsingAi}
                   onClick={() => handleAiParse()}
-                  className="px-3.5 py-1.5 bg-[#fef08a] dark:bg-[#292312] hover:bg-[#fde047] dark:hover:bg-[#3b3117] text-[#121212] dark:text-[#FBBF24] border-2 border-[#121212] dark:border-[#FBBF24] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded font-display text-[11px] font-bold uppercase cursor-pointer whitespace-nowrap"
+                  className="px-3.5 py-1.5 bg-[#fef08a] dark:bg-[#292312] hover:bg-[#fde047] dark:hover:bg-[#3b3117] text-[#121212] dark:text-[#FBBF24] border-2 border-[#121212] dark:border-[#FBBF24] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded font-display text-[11px] font-bold uppercase cursor-pointer whitespace-nowrap flex items-center gap-1.5"
                 >
-                  {isParsingAi ? 'Parsing...' : '⚡ Parse To Canvas'}
+                  <span className="material-symbols-outlined text-[15px] leading-none">bolt</span>
+                  <span>{isParsingAi ? 'Parsing...' : 'Parse To Canvas'}</span>
                 </button>
               </div>
               {aiError && (
@@ -1297,30 +1313,55 @@ export function NewTaskModal({
                     calendar_today
                   </span>
                   <span className="font-display text-[10px] font-bold uppercase tracking-wider">
-                    {DAY_SHORT_LABELS[selectedDayName] || selectedDayName}
+                    {formatDayShortLabel(selectedDateStr || selectedDayName)}
                   </span>
                 </button>
 
                 {activePillPopover === 'date' && (
-                  <div className="absolute left-0 top-full mt-1.5 z-30 bg-white dark:bg-[#161922] border-2 border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded p-1.5 w-48 space-y-1">
-                    {Object.keys(DAY_NAME_TO_YMD).map((dayKey) => (
-                      <button
-                        key={dayKey}
-                        type="button"
-                        onClick={() => {
-                          setSelectedDayName(dayKey);
-                          setActivePillPopover(null);
+                  <div className="absolute left-0 top-full mt-1.5 z-30 bg-white dark:bg-[#161922] border-2 border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded p-2 w-56 space-y-1.5 font-display">
+                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">
+                      Select Day & Date
+                    </div>
+                    <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-custom">
+                      {currentWeekList.map((wDay) => (
+                        <button
+                          key={wDay.name}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDayName(wDay.name);
+                            setSelectedDateStr(wDay.dateStr);
+                            setActivePillPopover(null);
+                          }}
+                          className={`w-full text-left px-2 py-1 rounded font-display text-[11px] font-bold uppercase flex items-center justify-between cursor-pointer ${
+                            selectedDayName === wDay.name && selectedDateStr === wDay.dateStr
+                              ? 'bg-[#fef08a] dark:bg-[#2E1850] text-[#121212] dark:text-[#C084FC] border border-[#121212] dark:border-[#A855F7]'
+                              : 'hover:bg-[#f6f3f2] dark:hover:bg-[#1E232E] text-[#121212] dark:text-[#F3F4F6]'
+                          }`}
+                        >
+                          <span>{wDay.name}</span>
+                          <span className="text-[9px] opacity-70">
+                            {wDay.monthShort} {String(wDay.date).padStart(2, '0')}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="pt-1.5 border-t border-slate-200 dark:border-[#383F50]">
+                      <label className="block text-[9px] font-bold text-slate-600 dark:text-[#9CA3AF] uppercase mb-1">
+                        Or Pick Specific Date
+                      </label>
+                      <input
+                        type="date"
+                        value={selectedDateStr}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) {
+                            setSelectedDateStr(val);
+                            setSelectedDayName(getDayNameFromDateStr(val));
+                          }
                         }}
-                        className={`w-full text-left px-2 py-1 rounded font-display text-[11px] font-bold uppercase flex items-center justify-between cursor-pointer ${
-                          selectedDayName === dayKey
-                            ? 'bg-[#fef08a] dark:bg-[#2E1850] text-[#121212] dark:text-[#C084FC] border border-[#121212] dark:border-[#A855F7]'
-                            : 'hover:bg-[#f6f3f2] dark:hover:bg-[#1E232E] text-[#121212] dark:text-[#F3F4F6]'
-                        }`}
-                      >
-                        <span>{dayKey}</span>
-                        <span className="text-[9px] opacity-70">{DAY_NAME_TO_YMD[dayKey]}</span>
-                      </button>
-                    ))}
+                        className="w-full text-xs p-1 border rounded bg-white dark:bg-[#10141C] text-slate-900 dark:text-[#F3F4F6] border-black dark:border-[#383F50]"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1949,10 +1990,10 @@ export function NewTaskModal({
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveChecklistItem(cf.id, itemIdx)}
-                                  className="text-[#7b7486] dark:text-[#9CA3AF] hover:text-[#ba1a1a] dark:hover:text-[#FB7185] text-xs font-bold px-1 cursor-pointer"
+                                  className="text-[#7b7486] dark:text-[#9CA3AF] hover:text-[#ba1a1a] dark:hover:text-[#FB7185] text-xs font-bold px-1 cursor-pointer flex items-center justify-center"
                                   title="Remove checklist item"
                                 >
-                                  ×
+                                  <span className="material-symbols-outlined text-[13px] leading-none">close</span>
                                 </button>
                               </div>
                             );

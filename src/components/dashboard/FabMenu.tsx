@@ -24,32 +24,12 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
           </div>
 
           <button
-            onClick={() => handleAction('task-chooser')}
-            className="w-full text-left p-2.5 bg-[#FEF08A] hover:bg-[#fde047] dark:bg-[#292312] dark:hover:bg-[#383019] border-2 border-black dark:border-[#FBBF24] rounded-lg shadow-[3px_3px_0px_#000] neo-btn font-bold text-xs flex items-center justify-between cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded bg-white dark:bg-[#0B0D11] border border-black dark:border-[#FBBF24] flex items-center justify-center text-xs shadow-[1px_1px_0px_#000]">
-                ⚡
-              </span>
-              <div>
-                <div className="font-black text-slate-900 dark:text-[#FBBF24]">
-                  Activity Chooser
-                </div>
-                <div className="text-[9px] text-slate-600 dark:text-[#9CA3AF] font-sans font-medium">
-                  Training, Study, Other, Flexible
-                </div>
-              </div>
-            </div>
-            <span className="text-xs font-black text-slate-900 dark:text-[#FBBF24]">→</span>
-          </button>
-
-          <button
             onClick={() => handleAction('new-task-modal')}
             className="w-full text-left p-2.5 bg-[#E9D5FF] hover:bg-[#d8b4fe] dark:bg-[#2E1850] dark:hover:bg-[#3b1f66] border-2 border-black dark:border-[#A855F7] rounded-lg shadow-[3px_3px_0px_#000] neo-btn font-bold text-xs flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2.5">
               <span className="w-7 h-7 rounded bg-white dark:bg-[#0B0D11] border border-black dark:border-[#A855F7] flex items-center justify-center text-xs shadow-[1px_1px_0px_#000]">
-                ✨
+                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#C084FC]">auto_awesome</span>
               </span>
               <div>
                 <div className="font-black text-slate-900 dark:text-[#C084FC]">
@@ -60,7 +40,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
                 </div>
               </div>
             </div>
-            <span className="text-xs font-black text-slate-900 dark:text-[#C084FC]">→</span>
+            <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#C084FC]">arrow_forward</span>
           </button>
 
           <button
@@ -69,7 +49,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
           >
             <div className="flex items-center gap-2.5">
               <span className="w-7 h-7 rounded bg-white dark:bg-[#0B0D11] border border-black dark:border-[#FB7185] flex items-center justify-center text-xs shadow-[1px_1px_0px_#000]">
-                🏋️
+                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#FB7185]">fitness_center</span>
               </span>
               <div>
                 <div className="font-black text-slate-900 dark:text-[#FB7185]">Training Session</div>
@@ -78,7 +58,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
                 </div>
               </div>
             </div>
-            <span className="text-xs font-black text-slate-900 dark:text-[#FB7185]">→</span>
+            <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#FB7185]">arrow_forward</span>
           </button>
 
           <button
@@ -87,7 +67,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
           >
             <div className="flex items-center gap-2.5">
               <span className="w-7 h-7 rounded bg-white dark:bg-[#0B0D11] border border-black dark:border-[#38BDF8] flex items-center justify-center text-xs shadow-[1px_1px_0px_#000]">
-                📖
+                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#38BDF8]">menu_book</span>
               </span>
               <div>
                 <div className="font-black text-slate-900 dark:text-[#38BDF8]">Study Session</div>
@@ -96,7 +76,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
                 </div>
               </div>
             </div>
-            <span className="text-xs font-black text-slate-900 dark:text-[#38BDF8]">→</span>
+            <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#38BDF8]">arrow_forward</span>
           </button>
 
           <button
@@ -105,7 +85,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
           >
             <div className="flex items-center gap-2.5">
               <span className="w-7 h-7 rounded bg-white dark:bg-[#0B0D11] border border-black dark:border-[#FBBF24] flex items-center justify-center text-xs shadow-[1px_1px_0px_#000]">
-                ⚙️
+                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#FBBF24]">settings</span>
               </span>
               <div>
                 <div className="font-black text-slate-900 dark:text-[#FBBF24]">Other Activity</div>
@@ -114,7 +94,7 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
                 </div>
               </div>
             </div>
-            <span className="text-xs font-black text-slate-900 dark:text-[#FBBF24]">→</span>
+            <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-[#FBBF24]">arrow_forward</span>
           </button>
         </div>
       )}
@@ -122,14 +102,10 @@ export function FabMenu({ onOpenModal }: FabMenuProps) {
       <button
         onClick={toggle}
         aria-label="Open Quick Schedule Menu"
-        className="w-14 h-14 bg-[#8B5CF6] dark:bg-[#9333EA] hover:bg-[#7c3aed] dark:hover:bg-[#C084FC] text-white dark:text-[#FFFFFF] rounded-xl border-2 border-black dark:border-white shadow-[4px_4px_0px_#000] neo-btn flex items-center justify-center text-3xl font-display font-black focus:outline-none cursor-pointer"
+        className="w-14 h-14 bg-[#8B5CF6] dark:bg-[#9333EA] hover:bg-[#7c3aed] dark:hover:bg-[#C084FC] text-white dark:text-[#FFFFFF] rounded-xl border-2 border-black dark:border-white shadow-[4px_4px_0px_#000] neo-btn flex items-center justify-center font-display font-black focus:outline-none cursor-pointer"
       >
-        <span
-          className={`transform transition-transform duration-200 ${
-            isOpen ? 'rotate-45' : 'rotate-0'
-          }`}
-        >
-          +
+        <span className="material-symbols-outlined text-[28px] transition-transform duration-200">
+          {isOpen ? 'close' : 'add'}
         </span>
       </button>
     </div>

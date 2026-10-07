@@ -58,16 +58,18 @@ export function TrainingDetails({
         </h3>
         <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-bold text-slate-700 dark:text-[#9CA3AF]">
           <span className="flex items-center gap-1">
-            📅 <span>{task.day}</span>
+            <span className="material-symbols-outlined text-[14px] leading-none">calendar_today</span>
+            <span>{task.day}</span>
           </span>
           <span className="flex items-center gap-1 font-mono">
-            ⏱️{' '}
+            <span className="material-symbols-outlined text-[14px] leading-none">timer</span>
             <span>
               {task.time} ({task.duration || '60 min'})
             </span>
           </span>
           <span className="flex items-center gap-1 text-[#8b5cf6] dark:text-[#FB7185]">
-            <span>🏷️</span> <span>{task.subtitle || 'Training Session'}</span>
+            <span className="material-symbols-outlined text-[14px] leading-none">label</span>
+            <span>{task.subtitle || 'Training Session'}</span>
           </span>
         </div>
       </div>
@@ -161,11 +163,12 @@ export function TrainingDetails({
                 <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
                   {ex.weight && (
                     <span
-                      className={`px-2 py-1 bg-[#FFE4E6] dark:bg-[#2A161D] text-slate-900 dark:text-[#FB7185] border-2 border-black dark:border-[#FB7185] rounded font-black text-[11px] shadow-[1px_1px_0px_#000] ${
+                      className={`px-2 py-1 bg-[#FFE4E6] dark:bg-[#2A161D] text-slate-900 dark:text-[#FB7185] border-2 border-black dark:border-[#FB7185] rounded font-black text-[11px] shadow-[1px_1px_0px_#000] flex items-center gap-1 ${
                         isCompleted ? 'line-through opacity-60' : ''
                       }`}
                     >
-                      🏋️ {ex.weight}
+                      <span className="material-symbols-outlined text-[13px] leading-none">fitness_center</span>
+                      <span>{ex.weight}</span>
                     </span>
                   )}
                   <span
@@ -190,7 +193,8 @@ export function TrainingDetails({
       {task.details?.notes ? (
         <div className="p-3 bg-yellow-50 dark:bg-[#2A161D] border-2 border-black dark:border-[#FB7185] rounded-lg neo-box-sm space-y-1">
           <div className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-[#FB7185] flex items-center gap-1">
-            <span>🥋</span> Coach Notes & Readiness
+            <span className="material-symbols-outlined text-[15px] leading-none">sports_martial_arts</span>
+            <span>Coach Notes & Readiness</span>
           </div>
           <p className="text-xs font-medium font-sans text-slate-700 dark:text-[#F3F4F6] leading-relaxed whitespace-pre-wrap">
             {task.details.notes}
@@ -214,14 +218,14 @@ export function TrainingDetails({
             onClick={onEdit}
             className="px-4 py-2 bg-white dark:bg-[#1E232E] hover:bg-slate-50 dark:hover:bg-[#2E1850] text-slate-900 dark:text-[#F3F4F6] border-2 border-black dark:border-[#383F50] rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] neo-btn flex items-center gap-1.5 cursor-pointer"
           >
-            <span>✎</span>
+            <span className="material-symbols-outlined text-[15px] leading-none">edit</span>
             <span>Edit Training</span>
           </button>
           <button
             onClick={onFinish}
             className="px-4 py-2 bg-[#34D399] hover:bg-[#10B981] text-[#062E1E] border-2 border-black rounded-lg font-black text-xs shadow-[3px_3px_0px_#000] neo-btn flex items-center gap-1.5 cursor-pointer"
           >
-            <span>✓</span>
+            <span className="material-symbols-outlined text-[15px] leading-none">check</span>
             <span>Finish Task</span>
           </button>
         </div>

@@ -21,7 +21,7 @@ export interface AuthRequest extends Request {
  */
 export function signAuthToken(
   userId: string,
-  expiresIn: jwt.SignOptions['expiresIn'] = '12h'
+  expiresIn: jwt.SignOptions['expiresIn'] = '30d'
 ): string {
   return jwt.sign({ userId }, getJwtSecret(), {
     algorithm: 'HS256',

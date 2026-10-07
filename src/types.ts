@@ -63,7 +63,8 @@ export interface CanvasField {
 
 export interface WklyFixedData {
   taskName: string;
-  day: string; // YYYY-MM-DD
+  day: string; // Day of week or YYYY-MM-DD
+  date?: string; // YYYY-MM-DD
   startingTime: string; // HH:MM in 24h format
   durationMinutes: number;
   color: AllowedColorName;
