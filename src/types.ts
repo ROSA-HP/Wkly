@@ -136,6 +136,8 @@ export interface Task {
   canvasFields?: CanvasField[];
   subtitle: string;
   completed?: boolean;
+  exercises?: ExerciseItem[];
+  goals?: GoalItem[];
   details?: TaskDetails; // Specific details based on category
 }
 

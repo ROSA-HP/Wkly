@@ -1,5 +1,5 @@
 import { Task, DayOfWeek } from '../../types';
-import { DayInfo } from '../../utils/dateUtils';
+import { DayInfo, extractExercises } from '../../utils/dateUtils';
 
 export type { DayInfo };
 
@@ -116,7 +116,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   const { cardClasses, badgeClasses } = getCardThemeClasses(task);
   const rawDynamicFields = task.fields || task.details?.fields || [];
   const canvasFields = task.canvasFields || task.details?.canvasFields || [];
-  const exercises = task.details?.exercises || [];
+  const exercises = extractExercises(task);
 
   // Avoid repeating Exercise/Weight/Sets/Reps as text lines when exercise drill pills are already rendered
   const dynamicFields =

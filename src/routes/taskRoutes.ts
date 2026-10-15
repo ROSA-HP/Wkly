@@ -96,9 +96,12 @@ const ALLOWED_DETAILS_KEYS = new Set([
   'canvasFields',
   'fields',
   'goals',
+  'exercises',
+  'studyType',
   'notes',
   'tag',
   'color',
+  'date',
   'isoDate',
   'subject',
   'type',
@@ -238,6 +241,34 @@ function sanitizeFixedData(rawFixed: any, fallbackTitle: string) {
   };
 }
 
+function sanitizeExercises(rawExercises: unknown) {
+  if (!Array.isArray(rawExercises)) return undefined;
+  return rawExercises.slice(0, 50).map((ex: any, idx: number) => {
+    return {
+      id: ex?.id ?? `ex-${idx}-${Date.now()}`,
+      name: sanitizeStringValue(String(ex?.name || `Exercise ${idx + 1}`)).slice(0, 200),
+      desc: ex?.desc !== undefined ? sanitizeStringValue(String(ex.desc)).slice(0, 500) : '',
+      weight: ex?.weight !== undefined ? sanitizeStringValue(String(ex.weight)).slice(0, 50) : undefined,
+      sets: Number.isFinite(Number(ex?.sets)) ? Math.max(1, Math.min(100, Math.round(Number(ex.sets)))) : 3,
+      reps: Number.isFinite(Number(ex?.reps)) ? Math.max(1, Math.min(1000, Math.round(Number(ex.reps)))) : 10,
+      rpe: ex?.rpe !== undefined ? sanitizeStringValue(String(ex.rpe)).slice(0, 50) : 'RPE 8',
+      rpeColor: ex?.rpeColor !== undefined ? sanitizeStringValue(String(ex.rpeColor)).slice(0, 100) : 'bg-yellow-100',
+      completed: Boolean(ex?.completed),
+    };
+  });
+}
+
+function sanitizeGoals(rawGoals: unknown) {
+  if (!Array.isArray(rawGoals)) return undefined;
+  return rawGoals.slice(0, 50).map((g: any, idx: number) => {
+    return {
+      id: g?.id ?? `goal-${idx}-${Date.now()}`,
+      text: sanitizeStringValue(String(g?.text || g?.name || '')).slice(0, 300),
+      checked: Boolean(g?.checked ?? g?.completed),
+    };
+  });
+}
+
 /**
  * Strictly normalizes and whitelists allowed task properties.
  * Discards any unexpected or malicious Mass Assignment properties (such as userId, _id, isAdmin, role, etc.).
@@ -374,14 +405,48 @@ export function normalizeTaskBody(body: Record<string, any>) {
       : 'bg-[#FEF08A]';
 
   // Whitelist only safe keys inside details
+  let rawDetailsObj = body?.details;
+  if (typeof rawDetailsObj === 'string') {
+    try {
+      rawDetailsObj = JSON.parse(rawDetailsObj);
+    } catch {
+      rawDetailsObj = {};
+    }
+  }
+
   const safeDetails: Record<string, any> = {};
-  if (body?.details && typeof body.details === 'object' && !Array.isArray(body.details)) {
-    for (const [k, v] of Object.entries(body.details)) {
+  if (rawDetailsObj && typeof rawDetailsObj === 'object' && !Array.isArray(rawDetailsObj)) {
+    for (const [k, v] of Object.entries(rawDetailsObj)) {
       if (ALLOWED_DETAILS_KEYS.has(k)) {
         safeDetails[k] = v;
       }
     }
   }
+
+  // Explicitly sanitize and assign structured exercises and goals
+  const rawExercises = rawDetailsObj?.exercises || body?.exercises;
+  let cleanExercises: any = undefined;
+  if (Array.isArray(rawExercises)) {
+    cleanExercises = sanitizeExercises(rawExercises);
+    if (cleanExercises) {
+      safeDetails.exercises = cleanExercises;
+    }
+  }
+
+  const rawGoals = rawDetailsObj?.goals || body?.goals;
+  let cleanGoals: any = undefined;
+  if (Array.isArray(rawGoals)) {
+    cleanGoals = sanitizeGoals(rawGoals);
+    if (cleanGoals) {
+      safeDetails.goals = cleanGoals;
+    }
+  }
+
+  const rawStudyType = rawDetailsObj?.studyType || body?.studyType;
+  if (rawStudyType) {
+    safeDetails.studyType = sanitizeStringValue(String(rawStudyType)).slice(0, 100);
+  }
+
   if (fixedData) safeDetails.fixedData = fixedData;
   if (canvasFields) safeDetails.canvasFields = canvasFields;
   if (sanitizedFields) safeDetails.fields = sanitizedFields;
@@ -400,6 +465,8 @@ export function normalizeTaskBody(body: Record<string, any>) {
     fields: sanitizedFields,
     fixedData,
     canvasFields,
+    exercises: cleanExercises,
+    goals: cleanGoals,
     day,
     time,
     duration,
@@ -779,11 +846,9 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
       for (const t of tasks) {
         if (t.day && t.date) {
           const derivedDay = getDayNameFromDateStr(t.date);
-          if (derivedDay !== t.day) {
-            const correctYmd = getYmdForDayOfWeek(t.day as any);
-            const timePart = t.date.includes('T') ? t.date.split('T')[1] : '09:00:00.000Z';
-            t.date = `${correctYmd}T${timePart}`;
-            await Task.updateOne({ _id: t._id }, { $set: { date: t.date } });
+          if (derivedDay && derivedDay !== t.day) {
+            t.day = derivedDay;
+            await Task.updateOne({ _id: t._id }, { $set: { day: derivedDay } });
           }
         }
       }

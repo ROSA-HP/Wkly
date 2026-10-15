@@ -1,4 +1,4 @@
-import { DayOfWeek } from '../types';
+import { DayOfWeek, ExerciseItem } from '../types';
 
 export const DAY_NAMES: DayOfWeek[] = [
   'Sunday',
@@ -294,4 +294,118 @@ export function getWeekDaysForDate(referenceDateStr?: string): DayInfo[] {
       isToday,
     };
   });
+}
+
+/**
+ * Bulletproof extractor for exercises and drills from any task representation.
+ * Supports details.exercises, root exercises, canvas fields, goals, and subtitle drill counts.
+ */
+export function extractExercises(task: any): ExerciseItem[] {
+  if (!task) return [];
+
+  let details = task.details;
+  if (typeof details === 'string') {
+    try {
+      details = JSON.parse(details);
+    } catch {
+      details = {};
+    }
+  }
+
+  // 1. Array from details.exercises
+  const fromDetails = details?.exercises;
+  if (Array.isArray(fromDetails) && fromDetails.length > 0) {
+    return fromDetails.map((ex: any, idx: number) => ({
+      id: ex.id ?? `drill-${task.id || 't'}-${idx + 1}`,
+      name: ex.name || `Drill ${idx + 1}`,
+      desc: ex.desc || 'Target load / velocity',
+      weight: ex.weight || '',
+      sets: Number(ex.sets) || 3,
+      reps: Number(ex.reps) || 10,
+      rpe: ex.rpe || 'RPE 8.0',
+      rpeColor: ex.rpeColor || 'bg-yellow-100 text-yellow-900',
+      completed: Boolean(ex.completed),
+    }));
+  }
+
+  // 2. Array from task.exercises directly
+  const fromRoot = task.exercises;
+  if (Array.isArray(fromRoot) && fromRoot.length > 0) {
+    return fromRoot.map((ex: any, idx: number) => ({
+      id: ex.id ?? `drill-${task.id || 't'}-${idx + 1}`,
+      name: ex.name || `Drill ${idx + 1}`,
+      desc: ex.desc || 'Target load / velocity',
+      weight: ex.weight || '',
+      sets: Number(ex.sets) || 3,
+      reps: Number(ex.reps) || 10,
+      rpe: ex.rpe || 'RPE 8.0',
+      rpeColor: ex.rpeColor || 'bg-yellow-100 text-yellow-900',
+      completed: Boolean(ex.completed),
+    }));
+  }
+
+  // 3. Array from canvasFields if created via dynamic canvas
+  const canvasFields = task.canvasFields || details?.canvasFields;
+  if (Array.isArray(canvasFields)) {
+    for (const cf of canvasFields) {
+      if (cf && Array.isArray(cf.value) && cf.value.length > 0) {
+        const isDrillOrChecklist =
+          cf.type === 'checklist' ||
+          /drill|exercise|workout|diagnostic/i.test(cf.label || '') ||
+          /drill|exercise/i.test(cf.subtitle || '');
+        if (isDrillOrChecklist) {
+          return cf.value.map((item: any, idx: number) => ({
+            id: item.id ?? `drill-${idx + 1}`,
+            name: typeof item === 'string' ? item : item.text || item.label || `Drill ${idx + 1}`,
+            desc: item.desc || cf.label || 'Target load / velocity',
+            sets: Number(item.sets) || 3,
+            reps: Number(item.reps) || 10,
+            rpe: item.rpe || 'RPE 8.0',
+            rpeColor: item.rpeColor || 'bg-yellow-100 text-yellow-900',
+            completed: Boolean(item.checked ?? item.completed),
+          }));
+        }
+      }
+    }
+  }
+
+  // 4. Array from goals if category is TRAINING or subtitle indicates drills
+  const goals = task.goals || details?.goals;
+  if (
+    Array.isArray(goals) &&
+    goals.length > 0 &&
+    (task.category === 'TRAINING' || /drill/i.test(task.subtitle || ''))
+  ) {
+    return goals.map((g: any, idx: number) => ({
+      id: g.id ?? `drill-${idx + 1}`,
+      name: g.text || g.name || `Drill ${idx + 1}`,
+      desc: 'Target load / velocity',
+      sets: 3,
+      reps: 10,
+      rpe: 'RPE 8.0',
+      rpeColor: 'bg-yellow-100 text-yellow-900',
+      completed: Boolean(g.checked ?? g.completed),
+    }));
+  }
+
+  // 5. Match drill count in subtitle or title (e.g. "3 Drills Scheduled", "3 Drills", "3 drills")
+  const textToScan = `${task.subtitle || ''} ${task.title || ''}`;
+  const match = textToScan.match(/(\d+)\s+drills?/i);
+  if (match) {
+    const count = parseInt(match[1], 10);
+    if (count > 0 && count <= 50) {
+      return Array.from({ length: count }, (_, idx) => ({
+        id: `drill-${task.id || 'gen'}-${idx + 1}`,
+        name: `Drill ${idx + 1}`,
+        desc: 'Target load / velocity',
+        sets: 3,
+        reps: 10,
+        rpe: 'RPE 8.0',
+        rpeColor: 'bg-yellow-100 text-yellow-900',
+        completed: false,
+      }));
+    }
+  }
+
+  return [];
 }

@@ -366,7 +366,7 @@ export default function App() {
     setSelectedDay(day);
     setSelectedDate(dateStr || getYmdForDayOfWeek(day));
     setActiveTask(null);
-    setActiveModal('new-task-modal');
+    setActiveModal('task-chooser');
   };
 
   const handleOpenModal = (modal: ModalState) => {
@@ -460,19 +460,20 @@ export default function App() {
       <TaskChooserModal
         isOpen={activeModal === 'task-chooser'}
         selectedDay={selectedDay}
-        onSelectDay={(day) => {
+        selectedDate={selectedDate}
+        onSelectDay={(day, newDate) => {
           setSelectedDay(day);
-          setSelectedDate(getYmdForDayInSameWeek(day, selectedDate));
+          setSelectedDate(newDate || getYmdForDayInSameWeek(day, selectedDate));
         }}
         onClose={() => {
           setActiveModal(null);
           setActiveTask(null);
         }}
         onSelectType={(type) => {
-          if (type === 'training') {
-            setActiveModal('training-form');
-          } else if (type === 'study') {
+          if (type === 'study') {
             setActiveModal('study-form');
+          } else if (type === 'training') {
+            setActiveModal('training-form');
           } else if (type === 'other') {
             setActiveModal('other-form');
           } else if (type === 'flexible') {

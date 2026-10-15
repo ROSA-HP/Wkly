@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Task, ExerciseItem } from '../../types';
+import { extractExercises } from '../../utils/dateUtils';
 
 interface TrainingDetailsProps {
   task: Task;
@@ -16,7 +17,12 @@ export function TrainingDetails({
   onFinish,
   onUpdateTask,
 }: TrainingDetailsProps) {
-  const realExercises: ExerciseItem[] = task.details?.exercises || [];
+  const [realExercises, setRealExercises] = useState<ExerciseItem[]>(() => extractExercises(task));
+
+  useEffect(() => {
+    setRealExercises(extractExercises(task));
+  }, [task]);
+
   const dynamicFields = task.fields || task.details?.fields || [];
 
   const [completedIds, setCompletedIds] = useState<(number | string)[]>(() => {
@@ -24,8 +30,8 @@ export function TrainingDetails({
   });
 
   useEffect(() => {
-    setCompletedIds((task.details?.exercises || []).filter((ex) => ex.completed).map((ex) => ex.id));
-  }, [task]);
+    setCompletedIds(realExercises.filter((ex) => ex.completed).map((ex) => ex.id));
+  }, [realExercises]);
 
   const toggleExercise = (id: number | string) => {
     const isCurrentlyCompleted = completedIds.includes(id);
@@ -35,15 +41,17 @@ export function TrainingDetails({
 
     setCompletedIds(nextCompleted);
 
-    if (onUpdateTask && realExercises.length > 0) {
-      const updatedExercises = realExercises.map((ex) => ({
-        ...ex,
-        completed: nextCompleted.includes(ex.id),
-      }));
+    const updatedExercises = realExercises.map((ex) => ({
+      ...ex,
+      completed: nextCompleted.includes(ex.id),
+    }));
+    setRealExercises(updatedExercises);
 
+    if (onUpdateTask) {
       onUpdateTask(task.id, {
+        exercises: updatedExercises,
         details: {
-          ...task.details,
+          ...(typeof task.details === 'object' ? task.details : {}),
           exercises: updatedExercises,
         },
       });

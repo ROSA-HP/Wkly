@@ -6,6 +6,7 @@ import {
   getYmdForDayOfWeek,
   getYmdForDayInSameWeek,
   getDayNameFromDateStr,
+  extractExercises,
   WEEK_DAYS_ORDER,
 } from '../../utils/dateUtils';
 
@@ -37,10 +38,10 @@ export function TrainingForm({ initialTask, defaultDay, defaultDate, onSave, onC
   const [colorTint, setColorTint] = useState(initialTask?.colorTint || 'bg-[#fce7f3]');
   const [notes, setNotes] = useState(initialTask?.details?.notes || '');
 
-  // Start with empty exercises checklist unless editing existing task
-  const [exercises, setExercises] = useState<ExerciseItem[]>(
-    initialTask?.details?.exercises ? [...initialTask.details.exercises] : []
-  );
+  // Initialize drills reliably from initialTask
+  const [exercises, setExercises] = useState<ExerciseItem[]>(() => {
+    return extractExercises(initialTask);
+  });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,7 @@ export function TrainingForm({ initialTask, defaultDay, defaultDate, onSave, onC
       duration,
       colorTint,
       subtitle: exercises.length > 0 ? `${exercises.length} Drills Scheduled` : 'Training Workout',
+      exercises,
       details: { exercises, notes, date, isoDate: `${date}T08:00:00.000Z` },
     });
   };
@@ -62,7 +64,7 @@ export function TrainingForm({ initialTask, defaultDay, defaultDate, onSave, onC
     setExercises([
       ...exercises,
       {
-        id: Date.now(),
+        id: `drill-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         name: `Exercise ${nextNum}`,
         desc: 'Target weight / tempo',
         sets: 3,

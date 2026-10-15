@@ -121,6 +121,8 @@ const taskSchema = new mongoose.Schema(
     colorTint: { type: String, maxlength: 64 },
     subtitle: { type: String, maxlength: 240 },
     completed: { type: Boolean, default: false },
+    exercises: { type: mongoose.Schema.Types.Mixed },
+    goals: { type: mongoose.Schema.Types.Mixed },
     details: { type: mongoose.Schema.Types.Mixed },
   },
   {

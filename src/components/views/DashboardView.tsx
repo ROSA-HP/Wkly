@@ -232,7 +232,7 @@ export function DashboardView({
                   if (onAddTaskDay) {
                     onAddTaskDay(dayName, dateStr);
                   } else {
-                    onOpenModal('new-task-modal');
+                    onOpenModal('task-chooser');
                   }
                 }}
               />
