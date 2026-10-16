@@ -145,66 +145,8 @@ function buildDefaultCanvasFields(initialTask) {
     }));
   }
 
-  // Default rich canvas blocks matching the Neo-Brutalist Canvas V2.4 specification
-  return [
-    {
-      id: `cf-1-${Date.now()}`,
-      label: 'Target Baud Rate / Sets',
-      value: 5,
-      type: 'number',
-      layoutSize: 'half-width',
-      unit: 'SETS',
-      subtitle: 'UART0 • Telemetry High-Speed Split',
-    },
-    {
-      id: `cf-2-${Date.now() + 1}`,
-      label: 'Sampling Frequency / Reps',
-      value: 12,
-      type: 'number',
-      layoutSize: 'half-width',
-      unit: 'REPS',
-      subtitle: 'Equivalent: 12 High-Velocity Reps',
-    },
-    {
-      id: `cf-3-${Date.now() + 2}`,
-      label: 'Sensor Address / Hardware',
-      value: '0x68 (MPU6050) • ESP32',
-      type: 'text',
-      layoutSize: 'half-width',
-      subtitle: 'Inter-IC Clock: 400 kHz Fast-Mode',
-    },
-    {
-      id: `cf-4-${Date.now() + 3}`,
-      label: 'Diagnostic / Drill Checklist',
-      value: [
-        {
-          id: 'chk-init-1',
-          text: 'Verify 3.3V rail voltage & inspect high-frequency decouple capacitors',
-          checked: true,
-        },
-        {
-          id: 'chk-init-2',
-          text: 'Flash FreeRTOS dual-core telemetry firmware onto micro-controller',
-          checked: true,
-        },
-        {
-          id: 'chk-init-3',
-          text: 'Log tri-axial accelerometer & sprint cadence telemetry stream',
-          checked: false,
-        },
-      ],
-      type: 'checklist',
-      layoutSize: 'half-width',
-    },
-    {
-      id: `cf-5-${Date.now() + 4}`,
-      label: 'Notes & Protocol Specification',
-      value:
-        'Calibrate gyro drift offset at 25°C ambient before endurance run. Ensure BLE peripheral advertising interval is locked to 50ms for low-latency athlete tracking.',
-      type: 'longText',
-      layoutSize: 'full-width',
-    },
-  ];
+  // When starting a new flexible task, start completely clean without any mock/default data in the flexible part
+  return [];
 }
 
 export function NewTaskModal({
@@ -347,6 +289,12 @@ export function NewTaskModal({
       setSelectedDateStr(
         defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : autonomousToday.dateStr)
       );
+      setTaskName('');
+      setStartingTime24('14:00');
+      setDurationDigits('60');
+      setSelectedColor('Mint');
+      setSprintTag('');
+      setCanvasFields([]);
     }
   }, [initialTask, defaultDay, defaultDate, autonomousToday]);
 
@@ -1138,60 +1086,57 @@ export function NewTaskModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-[#121212]/60 dark:bg-black/75 backdrop-blur-[2px] transition-opacity duration-200 font-sans"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-[#121212]/60 dark:bg-black/75 backdrop-blur-[2px] transition-opacity duration-200 font-sans"
       id="canvas-modal-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose();
       }}
     >
       {/* Main Modal Shell Frame (Compact, Proportionate Neo-Brutalist Layout) */}
-      <div className="relative w-full max-w-3xl max-h-[86vh] flex flex-col bg-[#fffdfa] dark:bg-[#161922] text-[#121212] dark:text-[#F3F4F6] border-[2.5px] border-[#121212] dark:border-[#383F50] shadow-[6px_6px_0_#121212] dark:shadow-[6px_6px_0_#000000] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 transition-colors">
+      <div className="relative w-full max-w-3xl max-h-[94vh] sm:max-h-[88vh] flex flex-col bg-[#fffdfa] dark:bg-[#161922] text-[#121212] dark:text-[#F3F4F6] border-[2.5px] border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] sm:shadow-[6px_6px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 transition-colors">
         {/* ZONE 1: FIXED HEADER ZONE */}
-        <div className="shrink-0 bg-white dark:bg-[#1E232E] border-b-2 border-[#121212] dark:border-[#383F50] px-3.5 md:px-5 py-2.5 flex flex-col gap-2 z-20 transition-colors">
+        <div className="shrink-0 bg-white dark:bg-[#1E232E] border-b-2 border-[#121212] dark:border-[#383F50] p-2.5 sm:px-5 sm:py-3 flex flex-col gap-2 z-20 transition-colors max-w-full overflow-hidden">
           {/* Top bar: Badge, Live Title, AI Trigger, Dismiss & Primary CTA */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-[260px] flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#fef08a] dark:bg-[#292312] text-[#121212] dark:text-[#FBBF24] border-2 border-[#121212] dark:border-[#FBBF24] font-display text-[10px] font-bold uppercase tracking-wider shadow-[1.5px_1.5px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#fef08a] dark:bg-[#292312] text-[#121212] dark:text-[#FBBF24] border-2 border-[#121212] dark:border-[#FBBF24] font-display text-[10px] font-bold uppercase tracking-wider shadow-[1.5px_1.5px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded shrink-0">
                 <span className="w-2 h-2 rounded-full bg-[#fd56a7] dark:bg-[#F472B6] inline-block animate-pulse"></span>
-                CUSTOM CANVAS V2.4
-              </span>
-              <span className="text-[#7b7486] dark:text-[#9CA3AF] font-display text-[10px] font-bold uppercase tracking-wider hidden sm:inline-block">
-                / DUAL-ROLE ENGINE
+                CUSTOM CANVAS
               </span>
 
               <button
                 type="button"
                 onClick={() => setShowAiDrawer((prev) => !prev)}
-                className={`inline-flex items-center gap-1 px-2.5 py-0.5 border-2 border-[#121212] dark:border-[#A855F7] shadow-[1.5px_1.5px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded font-display text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2 py-0.5 border-2 border-[#121212] dark:border-[#A855F7] shadow-[1.5px_1.5px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded font-display text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                   showAiDrawer
                     ? 'bg-[#8455ef] dark:bg-[#A855F7] text-white dark:text-[#0B0D11]'
                     : 'bg-[#f3e8ff] dark:bg-[#2E1850] hover:bg-[#e9ddff] dark:hover:bg-[#3b1f66] text-[#121212] dark:text-[#C084FC]'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                <span>{showAiDrawer ? 'Hide AI Parser' : 'AI Natural Language Parser'}</span>
+                <span className="material-symbols-outlined text-[13px]">auto_awesome</span>
+                <span>{showAiDrawer ? 'Hide AI' : 'AI Parser'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowJsonPreview((prev) => !prev)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 bg-white dark:bg-[#10141C] hover:bg-[#bae6fd] dark:hover:bg-[#132637] text-[#121212] dark:text-[#38BDF8] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#38BDF8] shadow-[1.5px_1.5px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded font-display text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-white dark:bg-[#10141C] hover:bg-[#bae6fd] dark:hover:bg-[#132637] text-[#121212] dark:text-[#38BDF8] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#38BDF8] shadow-[1.5px_1.5px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded font-display text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
               >
-                <span className="material-symbols-outlined text-[14px]">code</span>
+                <span className="material-symbols-outlined text-[13px]">code</span>
                 <span>{showJsonPreview ? 'Hide JSON' : 'JSON'}</span>
               </button>
             </div>
 
             {/* Actions: Secondary Dismiss & Solid Primary CTA Button */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="group flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#ffd1dc] dark:hover:bg-[#2A161D] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB7185] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FB7185] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-pointer"
+                  className="group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#ffd1dc] dark:hover:bg-[#2A161D] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB7185] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FB7185] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-pointer"
                   id="btn-cancel"
                   type="button"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <span className="material-symbols-outlined text-[16px]">close</span>
                   <span className="font-display text-[10px] font-bold uppercase tracking-wider">
                     Cancel
                   </span>
@@ -1199,7 +1144,7 @@ export function NewTaskModal({
               )}
               <button
                 onClick={handleSaveTask}
-                className={`group flex items-center gap-1.5 px-4 py-1.5 border-2 border-[#121212] dark:border-[#C084FC] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#121212] transition-all rounded cursor-pointer ${
+                className={`group flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 border-2 border-[#121212] dark:border-[#C084FC] shadow-[3px_3px_0_#121212] dark:shadow-[3px_3px_0_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#121212] transition-all rounded cursor-pointer ${
                   isCommitting
                     ? 'bg-[#bbf7d0] dark:bg-[#34D399] text-[#121212] dark:text-[#062E1E]'
                     : 'bg-[#8455ef] dark:bg-[#9333EA] hover:bg-[#6b38d4] dark:hover:bg-[#A855F7] text-white'
@@ -1208,14 +1153,14 @@ export function NewTaskModal({
                 type="button"
               >
                 <span
-                  className={`material-symbols-outlined text-[18px] ${
+                  className={`material-symbols-outlined text-[16px] ${
                     isCommitting ? 'animate-spin' : ''
                   }`}
                 >
                   {isCommitting ? 'sync' : 'save'}
                 </span>
-                <span className="font-display text-xs font-bold uppercase tracking-wider">
-                  {isCommitting ? 'Committed!' : 'Save Task To Board'}
+                <span className="font-display text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                  {isCommitting ? 'Saved!' : 'Save Task'}
                 </span>
               </button>
             </div>
@@ -1475,13 +1420,13 @@ export function NewTaskModal({
                   type="text"
                   value={sprintTag}
                   onChange={(e) => setSprintTag(e.target.value)}
-                  className="bg-transparent font-display text-[10px] font-bold uppercase tracking-wider text-[#121212] dark:text-[#34D399] focus:outline-none w-36 sm:w-44"
+                  className="bg-transparent font-display text-[10px] font-bold uppercase tracking-wider text-[#121212] dark:text-[#34D399] focus:outline-none w-28 sm:w-36"
                 />
               </div>
             </div>
 
             {/* 10 Circular Pastel Dopamine Swatch Pickers */}
-            <div className="flex items-center gap-1.5 p-1 bg-[#ebe7e7] dark:bg-[#10141C] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded-full">
+            <div className="flex items-center gap-1 p-1 bg-[#ebe7e7] dark:bg-[#10141C] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] rounded-full max-w-full overflow-x-auto no-scrollbar">
               <span className="font-display text-[10px] font-bold text-[#121212] dark:text-[#9CA3AF] px-1.5 uppercase hidden lg:inline">
                 SWATCH:
               </span>
@@ -1495,7 +1440,7 @@ export function NewTaskModal({
                     title={colorName}
                     onClick={() => setSelectedColor(colorName)}
                     style={{ backgroundColor: swatch.pastel }}
-                    className={`w-5 h-5 rounded-full border-2 border-[#121212] transition-transform relative focus:outline-none cursor-pointer flex items-center justify-center ${
+                    className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-[#121212] transition-transform relative focus:outline-none cursor-pointer flex items-center justify-center shrink-0 ${
                       isActive
                         ? 'border-[2.5px] ring-2 ring-[#121212] dark:ring-[#A855F7] ring-offset-1 dark:ring-offset-[#10141C] scale-110'
                         : 'hover:scale-110'
@@ -1514,7 +1459,7 @@ export function NewTaskModal({
         {/* ZONE 2: FLEXIBLE CANVAS WORKSPACE (MIDDLE) */}
         <div
           ref={canvasScrollRef}
-          className={`flex-1 overflow-y-auto p-3.5 md:p-4 flex flex-col gap-3 relative min-h-[240px] canvas-dot-grid scrollbar-custom transition-colors ${
+          className={`flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col gap-3 relative min-h-0 canvas-dot-grid scrollbar-custom transition-colors ${
             mouseDrag?.mode === 'palette'
               ? 'ring-4 ring-inset ring-[#8455ef] dark:ring-[#A855F7]'
               : ''
@@ -1522,17 +1467,17 @@ export function NewTaskModal({
           id="canvas-scroll-container"
         >
           {/* Canvas Workspace Guidance Banner */}
-          <div className="flex items-center justify-between bg-white/95 dark:bg-[#161922]/95 border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] dark:shadow-[3px_3px_0_#000000] px-4 py-1.5 rounded transition-colors">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 bg-[#6b38d4] dark:bg-[#A855F7] rounded-none border border-[#121212] dark:border-white rotate-45 inline-block"></span>
-              <span className="font-display text-[10px] font-bold uppercase text-[#121212] dark:text-[#F3F4F6] tracking-wider">
-                CANVAS WORKSPACE • GRAB ANY BLOCK TO MOVE • CLICK HALF/FULL TO RESIZE
+          <div className="flex items-center justify-between bg-white/95 dark:bg-[#161922]/95 border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] dark:shadow-[3px_3px_0_#000000] px-3 py-1.5 rounded transition-colors min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-2.5 h-2.5 bg-[#6b38d4] dark:bg-[#A855F7] rounded-none border border-[#121212] dark:border-white rotate-45 inline-block shrink-0"></span>
+              <span className="font-display text-[10px] font-bold uppercase text-[#121212] dark:text-[#F3F4F6] tracking-wider truncate">
+                CANVAS WORKSPACE • ADD BLOCKS BELOW
               </span>
             </div>
-            <div className="hidden sm:flex items-center gap-2 text-[#7b7486] dark:text-[#9CA3AF] font-display text-[10px] font-bold">
+            <div className="flex items-center gap-2 text-[#7b7486] dark:text-[#9CA3AF] font-display text-[10px] font-bold shrink-0">
               {mouseDrag && (
                 <span className="px-2 py-0.5 bg-[#fef08a] dark:bg-[#2E1850] text-[#121212] dark:text-[#C084FC] border border-[#121212] dark:border-[#A855F7] rounded animate-pulse">
-                  MOVING BLOCK...
+                  MOVING...
                 </span>
               )}
               <span>{canvasFields.length} BLOCKS</span>
@@ -1552,13 +1497,74 @@ export function NewTaskModal({
 
           {/* CANVAS CONTENT 12-COL GRID */}
           {canvasFields.length === 0 ? (
-            <div className="p-10 bg-white/95 dark:bg-[#161922]/95 border-[2.5px] border-dashed border-[#121212] dark:border-[#383F50] rounded shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] text-center space-y-2">
-              <p className="font-display text-sm font-bold uppercase text-[#121212] dark:text-[#F3F4F6]">
-                Canvas is empty — Drop or Click Blocks Below
-              </p>
-              <p className="text-xs text-[#494454] dark:text-[#9CA3AF]">
-                Drag any block from the bottom dock directly onto the canvas, or click to stack it.
-              </p>
+            <div className="p-5 sm:p-8 bg-white/95 dark:bg-[#161922]/95 border-[2.5px] border-dashed border-[#121212] dark:border-[#383F50] rounded shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] text-center space-y-3">
+              <div className="flex items-center justify-center">
+                <span className="w-10 h-10 rounded-full bg-[#fef08a] dark:bg-[#292312] border-2 border-black dark:border-[#FBBF24] flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[22px] text-slate-900 dark:text-[#FBBF24]">
+                    dashboard_customize
+                  </span>
+                </span>
+              </div>
+              <div>
+                <p className="font-display text-sm font-bold uppercase text-[#121212] dark:text-[#F3F4F6]">
+                  Flexible Canvas is Clean & Empty
+                </p>
+                <p className="text-xs text-[#494454] dark:text-[#9CA3AF] mt-0.5">
+                  Choose an element below to start building your task:
+                </p>
+              </div>
+
+              {/* Direct Quick-Add Buttons inside Empty Canvas */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleAddBlock('text', null)}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#bae6fd] text-[#121212] dark:text-[#F3F4F6] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] rounded font-display text-[11px] font-bold uppercase flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <span className="font-bold text-[#6b38d4] dark:text-[#A855F7]">T</span>
+                  <span>+ Short Text</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddBlock('number', null)}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#bbf7d0] text-[#121212] dark:text-[#F3F4F6] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] rounded font-display text-[11px] font-bold uppercase flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <span className="font-bold text-[#121212] dark:text-[#34D399]">#</span>
+                  <span>+ Number</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddBlock('checklist', null)}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#ffd1dc] text-[#121212] dark:text-[#F3F4F6] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] rounded font-display text-[11px] font-bold uppercase flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <span className="material-symbols-outlined text-[15px] text-[#b4136e] dark:text-[#FB7185]">check_box</span>
+                  <span>+ Checklist</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddBlock('number', 'sets-reps-pair')}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#f3e8ff] text-[#121212] dark:text-[#F3F4F6] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] rounded font-display text-[11px] font-bold uppercase flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <span className="material-symbols-outlined text-[15px] text-[#006577] dark:text-[#38BDF8]">fitness_center</span>
+                  <span>+ Sets & Reps</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddBlock('longText', null)}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#fef08a] text-[#121212] dark:text-[#F3F4F6] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] rounded font-display text-[11px] font-bold uppercase flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <span className="material-symbols-outlined text-[15px] text-[#121212] dark:text-[#FBBF24]">segment</span>
+                  <span>+ Notes</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddBlock('text', 'tags')}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white dark:bg-[#10141C] hover:bg-[#fed7aa] text-[#121212] dark:text-[#F3F4F6] border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] rounded font-display text-[11px] font-bold uppercase flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <span className="material-symbols-outlined text-[15px] text-[#121212] dark:text-[#FB923C]">label</span>
+                  <span>+ Tags</span>
+                </button>
+              </div>
             </div>
           ) : (
             <div
@@ -2155,69 +2161,73 @@ export function NewTaskModal({
         )}
 
         {/* ZONE 3: BOTTOM PALETTE DOCK (BUILDING BLOCKS SHELF - CLICK OR DRAG ONTO CANVAS) */}
-        <div className="shrink-0 bg-[#fef08a] dark:bg-[#1E232E] border-t-2 border-[#121212] dark:border-[#383F50] px-3.5 py-2 flex flex-col md:flex-row items-center justify-between gap-2 z-20 shadow-[0_-2px_0_rgba(18,18,18,0.1)] transition-colors select-none">
+        <div className="shrink-0 sticky bottom-0 bg-[#fef08a] dark:bg-[#1E232E] border-t-2 border-[#121212] dark:border-[#383F50] px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-2 z-20 shadow-[0_-2px_0_rgba(18,18,18,0.1)] transition-colors select-none max-w-full">
           {/* Dock Header */}
-          <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[#121212] dark:text-[#FBBF24] text-[20px]">
+          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
+            <span className="material-symbols-outlined text-[#121212] dark:text-[#FBBF24] text-[18px]">
               widgets
             </span>
-            <span className="font-display text-sm font-bold uppercase text-[#121212] dark:text-[#F3F4F6] tracking-wider">
+            <span className="font-display text-xs font-bold uppercase text-[#121212] dark:text-[#F3F4F6] tracking-wider">
               ADD BLOCK:
             </span>
           </div>
 
           {/* Interactive Block Badges (Click to Add OR Drag by Mouse onto Canvas!) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 overflow-x-auto max-w-full py-0.5">
+          <div className="flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto w-full max-w-full py-0.5 no-scrollbar">
             {/* Text Block Button */}
             <button
+              onClick={() => handleAddBlock('text', null)}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'text', null, '+ Short Text')
               }
-              className="palette-chip group flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#10141C] hover:bg-[#bae6fd] dark:hover:bg-[#132637] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#38BDF8] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#38BDF8] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] hover:shadow-[3px_3px_0_#121212] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-grab active:cursor-grabbing"
+              className="palette-chip group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#bae6fd] dark:hover:bg-[#132637] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#38BDF8] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#38BDF8] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 rounded cursor-pointer shrink-0"
               type="button"
             >
-              <span className="font-display text-sm font-bold text-[#6b38d4] dark:text-[#A855F7] leading-none">
+              <span className="font-display text-xs font-bold text-[#6b38d4] dark:text-[#A855F7] leading-none">
                 T
               </span>
-              <span className="font-display text-[10px] font-bold uppercase">
+              <span className="font-display text-[10px] font-bold uppercase whitespace-nowrap">
                 + Short Text
               </span>
             </button>
 
             {/* Number Block Button */}
             <button
+              onClick={() => handleAddBlock('number', null)}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'number', null, '+ Number')
               }
-              className="palette-chip group flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#10141C] hover:bg-[#bbf7d0] dark:hover:bg-[#122A21] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#34D399] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#34D399] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] hover:shadow-[3px_3px_0_#121212] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-grab active:cursor-grabbing"
+              className="palette-chip group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#bbf7d0] dark:hover:bg-[#122A21] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#34D399] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#34D399] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 rounded cursor-pointer shrink-0"
               type="button"
             >
-              <span className="font-display text-sm font-bold text-[#121212] dark:text-[#34D399] leading-none">
+              <span className="font-display text-xs font-bold text-[#121212] dark:text-[#34D399] leading-none">
                 #
               </span>
-              <span className="font-display text-[10px] font-bold uppercase">
+              <span className="font-display text-[10px] font-bold uppercase whitespace-nowrap">
                 + Number
               </span>
             </button>
 
             {/* Checklist Block Button */}
             <button
+              onClick={() => handleAddBlock('checklist', null)}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'checklist', null, '+ Checklist')
               }
-              className="palette-chip group flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#10141C] hover:bg-[#ffd1dc] dark:hover:bg-[#2A161D] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB7185] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FB7185] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] hover:shadow-[3px_3px_0_#121212] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-grab active:cursor-grabbing"
+              className="palette-chip group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#ffd1dc] dark:hover:bg-[#2A161D] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB7185] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FB7185] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 rounded cursor-pointer shrink-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#b4136e] dark:text-[#FB7185]">
+              <span className="material-symbols-outlined text-[15px] text-[#b4136e] dark:text-[#FB7185]">
                 check_box
               </span>
-              <span className="font-display text-[10px] font-bold uppercase">
+              <span className="font-display text-[10px] font-bold uppercase whitespace-nowrap">
                 + Checklist
               </span>
             </button>
 
             {/* Training Sets & Reps Pair Button */}
             <button
+              onClick={() => handleAddBlock('number', 'sets-reps-pair')}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(
                   e,
@@ -2226,45 +2236,47 @@ export function NewTaskModal({
                   '+ Sets & Reps'
                 )
               }
-              className="palette-chip group flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#10141C] hover:bg-[#f3e8ff] dark:hover:bg-[#2E1850] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#C084FC] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#A855F7] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] hover:shadow-[3px_3px_0_#121212] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-grab active:cursor-grabbing"
+              className="palette-chip group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#f3e8ff] dark:hover:bg-[#2E1850] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#C084FC] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#A855F7] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 rounded cursor-pointer shrink-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#006577] dark:text-[#38BDF8]">
+              <span className="material-symbols-outlined text-[15px] text-[#006577] dark:text-[#38BDF8]">
                 fitness_center
               </span>
-              <span className="font-display text-[10px] font-bold uppercase">
+              <span className="font-display text-[10px] font-bold uppercase whitespace-nowrap">
                 + Sets & Reps
               </span>
             </button>
 
             {/* Large Notes Block Button */}
             <button
+              onClick={() => handleAddBlock('longText', null)}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'longText', null, '+ Large Notes')
               }
-              className="palette-chip group flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#10141C] hover:bg-[#fef08a] dark:hover:bg-[#292312] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FBBF24] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FBBF24] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] hover:shadow-[3px_3px_0_#121212] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-grab active:cursor-grabbing"
+              className="palette-chip group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#fef08a] dark:hover:bg-[#292312] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FBBF24] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FBBF24] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 rounded cursor-pointer shrink-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#121212] dark:text-[#FBBF24]">
+              <span className="material-symbols-outlined text-[15px] text-[#121212] dark:text-[#FBBF24]">
                 segment
               </span>
-              <span className="font-display text-[10px] font-bold uppercase">
+              <span className="font-display text-[10px] font-bold uppercase whitespace-nowrap">
                 + Large Notes
               </span>
             </button>
 
             {/* Tags Block Button */}
             <button
+              onClick={() => handleAddBlock('text', 'tags')}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'text', 'tags', '+ Tags')
               }
-              className="palette-chip group flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#10141C] hover:bg-[#fed7aa] dark:hover:bg-[#2E190B] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB923C] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FB923C] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] hover:shadow-[3px_3px_0_#121212] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all rounded cursor-grab active:cursor-grabbing"
+              className="palette-chip group flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-[#10141C] hover:bg-[#fed7aa] dark:hover:bg-[#2E190B] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB923C] border-2 border-[#121212] dark:border-[#383F50] dark:hover:border-[#FB923C] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 rounded cursor-pointer shrink-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#121212] dark:text-[#FB923C]">
+              <span className="material-symbols-outlined text-[15px] text-[#121212] dark:text-[#FB923C]">
                 label
               </span>
-              <span className="font-display text-[10px] font-bold uppercase">
+              <span className="font-display text-[10px] font-bold uppercase whitespace-nowrap">
                 + Tags
               </span>
             </button>

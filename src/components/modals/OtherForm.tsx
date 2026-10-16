@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Task, DayOfWeek, GoalItem } from '../../types';
 import { ClockTimePicker } from './ClockTimePicker';
 import {
@@ -42,6 +42,26 @@ export function OtherForm({ initialTask, defaultDay, defaultDate, onSave, onClos
   const [goals, setGoals] = useState<GoalItem[]>(
     initialTask?.details?.goals ? [...initialTask.details.goals] : []
   );
+
+  useEffect(() => {
+    if (initialTask) {
+      setTitle(initialTask.title || '');
+      setTag(initialTask.details?.tag || initialTask.subtitle || 'Life Admin');
+      const taskDay = initialTask.day || (initialTask.date
+        ? getDayNameFromDateStr(initialTask.date)
+        : defaultDay || (defaultDate ? getDayNameFromDateStr(defaultDate) : autonomousToday.dayName));
+      setDay(taskDay);
+      const taskDate = initialTask.date
+        ? initialTask.date.slice(0, 10)
+        : defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : autonomousToday.dateStr);
+      setDate(taskDate);
+      setTime(initialTask.time || '06:00 PM');
+      setDuration(initialTask.duration || '30 min');
+      setColorTint(initialTask.colorTint || 'bg-[#fed7aa]');
+      setNotes(initialTask.details?.notes || '');
+      setGoals(initialTask.details?.goals ? [...initialTask.details.goals] : []);
+    }
+  }, [initialTask, defaultDay, defaultDate]);
 
   const tagsList = [
     { name: 'Life Admin', icon: 'folder' },

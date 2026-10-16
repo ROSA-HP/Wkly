@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Task, DayOfWeek, GoalItem } from '../../types';
 import { ClockTimePicker } from './ClockTimePicker';
 import {
@@ -44,6 +44,26 @@ export function StudyForm({ initialTask, defaultDay, defaultDate, onSave, onClos
   const [goals, setGoals] = useState<GoalItem[]>(
     initialTask?.details?.goals ? [...initialTask.details.goals] : []
   );
+
+  useEffect(() => {
+    if (initialTask) {
+      setSubject(initialTask.title || '');
+      const taskDay = initialTask.day || (initialTask.date
+        ? getDayNameFromDateStr(initialTask.date)
+        : defaultDay || (defaultDate ? getDayNameFromDateStr(defaultDate) : autonomousToday.dayName));
+      setDay(taskDay);
+      const taskDate = initialTask.date
+        ? initialTask.date.slice(0, 10)
+        : defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : autonomousToday.dateStr);
+      setDate(taskDate);
+      setTime(initialTask.time || '10:00 AM');
+      setDuration(initialTask.duration || '90 min');
+      setStudyType(initialTask.details?.studyType || 'Problem Set / Homework');
+      setColorTint(initialTask.colorTint || 'bg-[#bae6fd]');
+      setNotes(initialTask.details?.notes || '');
+      setGoals(initialTask.details?.goals ? [...initialTask.details.goals] : []);
+    }
+  }, [initialTask, defaultDay, defaultDate]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Task, DayOfWeek, ExerciseItem } from '../../types';
 import { ClockTimePicker } from './ClockTimePicker';
 import {
@@ -42,6 +42,25 @@ export function TrainingForm({ initialTask, defaultDay, defaultDate, onSave, onC
   const [exercises, setExercises] = useState<ExerciseItem[]>(() => {
     return extractExercises(initialTask);
   });
+
+  useEffect(() => {
+    if (initialTask) {
+      setTitle(initialTask.title || '');
+      const taskDay = initialTask.day || (initialTask.date
+        ? getDayNameFromDateStr(initialTask.date)
+        : defaultDay || (defaultDate ? getDayNameFromDateStr(defaultDate) : autonomousToday.dayName));
+      setDay(taskDay);
+      const taskDate = initialTask.date
+        ? initialTask.date.slice(0, 10)
+        : defaultDate || (defaultDay ? getYmdForDayOfWeek(defaultDay) : autonomousToday.dateStr);
+      setDate(taskDate);
+      setTime(initialTask.time || '08:00 AM');
+      setDuration(initialTask.duration || '60 min');
+      setColorTint(initialTask.colorTint || 'bg-[#fce7f3]');
+      setNotes(initialTask.details?.notes || '');
+      setExercises(extractExercises(initialTask));
+    }
+  }, [initialTask, defaultDay, defaultDate]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ViewState, ModalState, Task, DayOfWeek } from './types';
-import { getTodayInfo, getYmdForDayOfWeek, getYmdForDayInSameWeek, getDayNameFromDateStr } from './utils/dateUtils';
+import { getTodayInfo, getYmdForDayOfWeek, getYmdForDayInSameWeek, getDayNameFromDateStr, extractExercises } from './utils/dateUtils';
 import { authenticatedFetch, ensureAuthToken } from './utils/api';
 import { Header } from './components/layout/Header';
 import { LoginView } from './components/views/LoginView';
@@ -353,7 +353,13 @@ export default function App() {
 
   const handleTaskClick = (task: Task) => {
     setActiveTask(task);
-    if (task.category === 'TRAINING') {
+    const drills = extractExercises(task);
+    if (
+      task.category === 'TRAINING' ||
+      drills.length > 0 ||
+      /drill/i.test(task.subtitle || '') ||
+      /drill/i.test(task.title || '')
+    ) {
       setActiveModal('training-details');
     } else if (task.category === 'STUDYING') {
       setActiveModal('study-details');
@@ -430,12 +436,15 @@ export default function App() {
         />
       )}
 
-      <Header
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
-
-      {currentView === 'login' && <LoginView onLogin={handleLogin} />}
+      {currentView === 'login' && (
+        <>
+          <Header
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={toggleDarkMode}
+          />
+          <LoginView onLogin={handleLogin} />
+        </>
+      )}
 
       {currentView === 'dashboard' && (
         <DashboardView
@@ -443,6 +452,10 @@ export default function App() {
           onOpenModal={handleOpenModal}
           onTaskClick={handleTaskClick}
           onAddTaskDay={handleAddTaskOnDay}
+          onUpdateTask={handleUpdateTask}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+          onLogout={handleReset}
         />
       )}
 

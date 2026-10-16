@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Task, GoalItem } from '../../types';
 
 interface OtherDetailsProps {
@@ -16,7 +16,26 @@ export function OtherDetails({
   onFinish,
   onUpdateTask,
 }: OtherDetailsProps) {
-  const realGoals: GoalItem[] = task.details?.goals || [];
+  const realGoals: GoalItem[] = useMemo(() => {
+    if (task.details?.goals && Array.isArray(task.details.goals) && task.details.goals.length > 0) {
+      return task.details.goals;
+    }
+    if (task.goals && Array.isArray(task.goals) && task.goals.length > 0) {
+      return task.goals;
+    }
+    const cfs = task.canvasFields || task.details?.canvasFields || [];
+    for (const cf of cfs) {
+      if (cf && Array.isArray(cf.value) && cf.value.length > 0) {
+        return cf.value.map((item: any, idx: number) => ({
+          id: item.id ?? idx + 1,
+          text: typeof item === 'string' ? item : item.text || item.label || `Item ${idx + 1}`,
+          checked: Boolean(item.checked ?? item.completed),
+        }));
+      }
+    }
+    return [];
+  }, [task]);
+
   const dynamicFields = task.fields || task.details?.fields || [];
   const canvasFields = task.canvasFields || task.details?.canvasFields || [];
 
@@ -25,8 +44,8 @@ export function OtherDetails({
   });
 
   useEffect(() => {
-    setCompletedIds((task.details?.goals || []).filter((g) => g.checked).map((g) => g.id));
-  }, [task]);
+    setCompletedIds(realGoals.filter((g) => g.checked).map((g) => g.id));
+  }, [realGoals]);
 
   const toggleGoal = (id: number | string) => {
     const isCurrentlyCompleted = completedIds.includes(id);

@@ -297,6 +297,37 @@ export function getWeekDaysForDate(referenceDateStr?: string): DayInfo[] {
 }
 
 /**
+ * Calculates standard ISO week number (1-53) for any date or YYYY-MM-DD string
+ */
+export function getWeekNumber(dateInput?: string | Date): number {
+  let target: Date;
+  if (!dateInput) {
+    target = new Date();
+  } else if (typeof dateInput === 'string') {
+    const parsed = parseYmd(dateInput);
+    if (parsed) {
+      target = new Date(parsed.year, parsed.month - 1, parsed.day, 12, 0, 0);
+    } else {
+      target = new Date(dateInput);
+    }
+  } else {
+    target = new Date(dateInput.valueOf());
+  }
+
+  if (isNaN(target.getTime())) return 42;
+
+  // Thursday in current week decides the year
+  const dayNr = (target.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+}
+
+/**
  * Bulletproof extractor for exercises and drills from any task representation.
  * Supports details.exercises, root exercises, canvas fields, goals, and subtitle drill counts.
  */
