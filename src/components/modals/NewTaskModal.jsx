@@ -218,6 +218,7 @@ export function NewTaskModal({
   const [draggedChecklistItem, setDraggedChecklistItem] = useState(null); // { blockId, itemIdx }
   const canvasGridRef = React.useRef(null);
   const canvasScrollRef = React.useRef(null);
+  const justDraggedPaletteRef = React.useRef(false);
 
   // AI Natural Language Parser & JSON Inspector
   const [showAiDrawer, setShowAiDrawer] = useState(false);
@@ -250,6 +251,7 @@ export function NewTaskModal({
   }, [isOpen, showAiDrawer]);
 
   useEffect(() => {
+    if (!isOpen) return;
     if (initialTask) {
       setTaskName(
         initialTask.fixedData?.taskName ||
@@ -296,7 +298,7 @@ export function NewTaskModal({
       setSprintTag('');
       setCanvasFields([]);
     }
-  }, [initialTask, defaultDay, defaultDate, autonomousToday]);
+  }, [isOpen, initialTask, defaultDay, defaultDate, autonomousToday]);
 
   const activeColorMeta = useMemo(
     () => COLOR_HEX_MAP[selectedColor] || COLOR_HEX_MAP.Mint,
@@ -680,6 +682,11 @@ export function NewTaskModal({
 
       if (isDraggingPalette) {
         setMouseDrag(null);
+        justDraggedPaletteRef.current = true;
+        setTimeout(() => {
+          justDraggedPaletteRef.current = false;
+        }, 180);
+
         // Check if released inside the canvas workspace
         const scrollEl = canvasScrollRef.current;
         if (scrollEl) {
@@ -711,10 +718,9 @@ export function NewTaskModal({
             handleAddBlock(blockType, customPreset, insertIdx);
           }
         }
-      } else {
-        // Normal click (< 6px movement): immediately add block to canvas
-        handleAddBlock(blockType, customPreset);
       }
+      // If NOT dragging palette, do not call handleAddBlock here.
+      // The button's native onClick will handle adding exactly ONE block without duplication.
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -1475,6 +1481,16 @@ export function NewTaskModal({
               </span>
             </div>
             <div className="flex items-center gap-2 text-[#7b7486] dark:text-[#9CA3AF] font-display text-[10px] font-bold shrink-0">
+              {canvasFields.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCanvasFields([])}
+                  className="px-1.5 py-0.5 text-[9px] font-bold text-[#ba1a1a] dark:text-[#FB7185] hover:bg-[#ffd1dc]/40 dark:hover:bg-[#2A161D] border border-[#ba1a1a]/40 dark:border-[#FB7185]/40 rounded cursor-pointer uppercase transition-colors"
+                  title="Reset & clear all flexible canvas blocks"
+                >
+                  Clear All
+                </button>
+              )}
               {mouseDrag && (
                 <span className="px-2 py-0.5 bg-[#fef08a] dark:bg-[#2E1850] text-[#121212] dark:text-[#C084FC] border border-[#121212] dark:border-[#A855F7] rounded animate-pulse">
                   MOVING...
@@ -1654,14 +1670,14 @@ export function NewTaskModal({
                       <span className="material-symbols-outlined text-[13px] leading-none">
                         {isHalf ? 'width_normal' : 'width_full'}
                       </span>
-                      <span>{isHalf ? 'Half' : 'Full'}</span>
+                      <span className="hidden sm:inline">{isHalf ? 'Half' : 'Full'}</span>
                     </button>
 
                     <select
                       value={cf.type}
                       onChange={(e) => handleSwitchBlockType(cf.id, e.target.value)}
                       aria-label="Block type"
-                      className="px-1.5 py-0.5 bg-[#f6f3f2] dark:bg-[#1E232E] hover:bg-[#bae6fd]/50 dark:hover:bg-[#2E1850] text-[#121212] dark:text-[#F3F4F6] border border-[#121212] dark:border-[#383F50] rounded font-display text-[10px] font-bold uppercase focus:outline-none cursor-pointer transition-colors"
+                      className="px-1 py-0.5 bg-[#f6f3f2] dark:bg-[#1E232E] hover:bg-[#bae6fd]/50 dark:hover:bg-[#2E1850] text-[#121212] dark:text-[#F3F4F6] border border-[#121212] dark:border-[#383F50] rounded font-display text-[9px] sm:text-[10px] font-bold uppercase focus:outline-none cursor-pointer transition-colors max-w-[76px] sm:max-w-none"
                     >
                       <option value="number" className="bg-white dark:bg-[#1E232E] text-[#121212] dark:text-[#F3F4F6]">Number</option>
                       <option value="text" className="bg-white dark:bg-[#1E232E] text-[#121212] dark:text-[#F3F4F6]">Text</option>
@@ -1708,11 +1724,11 @@ export function NewTaskModal({
                       key={cf.id || idx}
                       {...blockDragProps}
                       onClick={() => setActiveBlockId(cf.id)}
-                      className={`${colSpanClass} group relative bg-white dark:bg-[#161922] border-[2.5px] border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded p-4 flex flex-col justify-between transition-all hover:shadow-[5px_5px_0_#121212] dark:hover:shadow-[5px_5px_0_#000000] cursor-grab active:cursor-grabbing ${dragStateClasses}`}
+                      className={`${colSpanClass} group relative bg-white dark:bg-[#161922] border-[2.5px] border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded p-3.5 sm:p-4 flex flex-col justify-between transition-all hover:shadow-[5px_5px_0_#121212] dark:hover:shadow-[5px_5px_0_#000000] cursor-grab active:cursor-grabbing overflow-hidden ${dragStateClasses}`}
                     >
                       {resizeEdgeHandle}
 
-                      <div className="flex items-center justify-between pb-2 border-b-2 border-[#121212]/10 dark:border-[#383F50] gap-2">
+                      <div className="flex items-center justify-between pb-2 border-b-2 border-[#121212]/10 dark:border-[#383F50] gap-1.5 min-w-0">
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           {inlineDragGrip}
                           <span
@@ -1731,15 +1747,15 @@ export function NewTaskModal({
                               handleUpdateBlock(cf.id, { label: e.target.value })
                             }
                             placeholder="Field Label..."
-                            className="font-display text-xs font-bold uppercase text-[#121212] dark:text-[#F3F4F6] bg-transparent border-b border-transparent focus:border-[#121212] dark:focus:border-[#A855F7] focus:outline-none flex-1 min-w-0 cursor-text"
+                            className="font-display text-xs font-bold uppercase text-[#121212] dark:text-[#F3F4F6] bg-transparent border-b border-transparent focus:border-[#121212] dark:focus:border-[#A855F7] focus:outline-none flex-1 min-w-0 cursor-text truncate"
                           />
                         </div>
                         {headerControls}
                       </div>
 
                       {/* Main Value & Stepper Row */}
-                      <div className="flex items-center justify-between py-3 gap-4">
-                        <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3 min-w-0">
+                        <div className="flex flex-col flex-1 min-w-0">
                           <input
                             type="text"
                             inputMode="numeric"
@@ -1769,7 +1785,7 @@ export function NewTaskModal({
                                 value: digits === '' ? 0 : parseInt(digits, 10),
                               });
                             }}
-                            className="font-display text-3xl md:text-4xl font-bold text-[#121212] dark:text-[#F3F4F6] tracking-tight leading-none bg-transparent focus:outline-none w-full cursor-text"
+                            className="font-display text-2xl sm:text-3xl md:text-4xl font-black text-[#121212] dark:text-[#F3F4F6] tracking-tight leading-none bg-transparent focus:outline-none w-full cursor-text"
                           />
                           <input
                             type="text"
@@ -1777,12 +1793,13 @@ export function NewTaskModal({
                             onChange={(e) =>
                               handleUpdateBlock(cf.id, { subtitle: e.target.value })
                             }
-                            className="text-xs font-medium text-[#494454] dark:text-[#9CA3AF] mt-1 bg-transparent focus:outline-none cursor-text"
+                            placeholder="Subtitle / cue..."
+                            className="text-xs font-medium text-[#494454] dark:text-[#9CA3AF] mt-1 bg-transparent focus:outline-none cursor-text truncate w-full"
                           />
                         </div>
 
                         {/* Minus / Plus Tactile Stepper Box */}
-                        <div className="flex items-center border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] bg-[#f6f3f2] dark:bg-[#10141C] rounded overflow-hidden shrink-0">
+                        <div className="flex items-center border-2 border-[#121212] dark:border-[#383F50] shadow-[2px_2px_0_#121212] dark:shadow-[2px_2px_0_#000000] bg-[#f6f3f2] dark:bg-[#10141C] rounded overflow-hidden shrink-0 max-w-[55%]">
                           <button
                             type="button"
                             onClick={() =>
@@ -1790,12 +1807,12 @@ export function NewTaskModal({
                                 value: Math.max(0, numVal - 1),
                               })
                             }
-                            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#1E232E] hover:bg-[#ffd1dc] dark:hover:bg-[#2A161D] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB7185] border-r-2 border-[#121212] dark:border-[#383F50] active:translate-y-0.5 transition-colors font-display text-lg font-bold cursor-pointer"
+                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-white dark:bg-[#1E232E] hover:bg-[#ffd1dc] dark:hover:bg-[#2A161D] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#FB7185] border-r-2 border-[#121212] dark:border-[#383F50] active:translate-y-0.5 transition-colors font-display text-sm sm:text-base font-black cursor-pointer shrink-0"
                             title="Decrease Value"
                           >
                             -
                           </button>
-                          <span className="px-3 font-display text-xs font-bold text-[#121212] dark:text-[#F3F4F6] uppercase">
+                          <span className="px-2 sm:px-2.5 font-display text-[11px] sm:text-xs font-black text-[#121212] dark:text-[#F3F4F6] uppercase whitespace-nowrap truncate max-w-[90px]">
                             {numVal} {unitLabel}
                           </span>
                           <button
@@ -1805,7 +1822,7 @@ export function NewTaskModal({
                                 value: numVal + 1,
                               })
                             }
-                            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#1E232E] hover:bg-[#bbf7d0] dark:hover:bg-[#122A21] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#34D399] border-l-2 border-[#121212] dark:border-[#383F50] active:translate-y-0.5 transition-colors font-display text-lg font-bold cursor-pointer"
+                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-white dark:bg-[#1E232E] hover:bg-[#bbf7d0] dark:hover:bg-[#122A21] text-[#121212] dark:text-[#F3F4F6] dark:hover:text-[#34D399] border-l-2 border-[#121212] dark:border-[#383F50] active:translate-y-0.5 transition-colors font-display text-sm sm:text-base font-black cursor-pointer shrink-0"
                             title="Increase Value"
                           >
                             +
@@ -1828,12 +1845,12 @@ export function NewTaskModal({
                       key={cf.id || idx}
                       {...blockDragProps}
                       onClick={() => setActiveBlockId(cf.id)}
-                      className={`${colSpanClass} group relative bg-white dark:bg-[#161922] border-[2.5px] border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded p-4 flex flex-col justify-between transition-all hover:shadow-[5px_5px_0_#121212] dark:hover:shadow-[5px_5px_0_#000000] cursor-grab active:cursor-grabbing ${dragStateClasses}`}
+                      className={`${colSpanClass} group relative bg-white dark:bg-[#161922] border-[2.5px] border-[#121212] dark:border-[#383F50] shadow-[4px_4px_0_#121212] dark:shadow-[4px_4px_0_#000000] rounded p-3.5 sm:p-4 flex flex-col justify-between transition-all hover:shadow-[5px_5px_0_#121212] dark:hover:shadow-[5px_5px_0_#000000] cursor-grab active:cursor-grabbing overflow-hidden ${dragStateClasses}`}
                     >
                       {resizeEdgeHandle}
 
                       <div>
-                        <div className="flex items-center justify-between pb-2 border-b-2 border-[#121212]/10 dark:border-[#383F50] gap-2">
+                        <div className="flex items-center justify-between pb-2 border-b-2 border-[#121212]/10 dark:border-[#383F50] gap-1.5 min-w-0">
                           <div className="flex items-center gap-1.5 flex-1 min-w-0">
                             {inlineDragGrip}
                             <span className="material-symbols-outlined text-[16px] text-[#006577] dark:text-[#38BDF8] shrink-0">
@@ -1846,7 +1863,7 @@ export function NewTaskModal({
                                 handleUpdateBlock(cf.id, { label: e.target.value })
                               }
                               placeholder="Property Label (e.g. Project, Hardware)..."
-                              className="font-display text-xs font-bold uppercase text-[#121212] dark:text-[#F3F4F6] bg-transparent border-b border-transparent focus:border-[#121212] dark:focus:border-[#A855F7] focus:outline-none flex-1 min-w-0 cursor-text"
+                              className="font-display text-xs font-bold uppercase text-[#121212] dark:text-[#F3F4F6] bg-transparent border-b border-transparent focus:border-[#121212] dark:focus:border-[#A855F7] focus:outline-none flex-1 min-w-0 cursor-text truncate"
                             />
                           </div>
                           {headerControls}
@@ -2176,7 +2193,10 @@ export function NewTaskModal({
           <div className="flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto w-full max-w-full py-0.5 no-scrollbar">
             {/* Text Block Button */}
             <button
-              onClick={() => handleAddBlock('text', null)}
+              onClick={() => {
+                if (justDraggedPaletteRef.current) return;
+                handleAddBlock('text', null);
+              }}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'text', null, '+ Short Text')
               }
@@ -2193,7 +2213,10 @@ export function NewTaskModal({
 
             {/* Number Block Button */}
             <button
-              onClick={() => handleAddBlock('number', null)}
+              onClick={() => {
+                if (justDraggedPaletteRef.current) return;
+                handleAddBlock('number', null);
+              }}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'number', null, '+ Number')
               }
@@ -2210,7 +2233,10 @@ export function NewTaskModal({
 
             {/* Checklist Block Button */}
             <button
-              onClick={() => handleAddBlock('checklist', null)}
+              onClick={() => {
+                if (justDraggedPaletteRef.current) return;
+                handleAddBlock('checklist', null);
+              }}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'checklist', null, '+ Checklist')
               }
@@ -2227,7 +2253,10 @@ export function NewTaskModal({
 
             {/* Training Sets & Reps Pair Button */}
             <button
-              onClick={() => handleAddBlock('number', 'sets-reps-pair')}
+              onClick={() => {
+                if (justDraggedPaletteRef.current) return;
+                handleAddBlock('number', 'sets-reps-pair');
+              }}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(
                   e,
@@ -2249,7 +2278,10 @@ export function NewTaskModal({
 
             {/* Large Notes Block Button */}
             <button
-              onClick={() => handleAddBlock('longText', null)}
+              onClick={() => {
+                if (justDraggedPaletteRef.current) return;
+                handleAddBlock('longText', null);
+              }}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'longText', null, '+ Large Notes')
               }
@@ -2266,7 +2298,10 @@ export function NewTaskModal({
 
             {/* Tags Block Button */}
             <button
-              onClick={() => handleAddBlock('text', 'tags')}
+              onClick={() => {
+                if (justDraggedPaletteRef.current) return;
+                handleAddBlock('text', 'tags');
+              }}
               onMouseDown={(e) =>
                 handlePaletteChipMouseDown(e, 'text', 'tags', '+ Tags')
               }
